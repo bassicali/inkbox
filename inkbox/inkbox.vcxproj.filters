@@ -1,0 +1,167 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Include">
+      <UniqueIdentifier>{c3b1f18b-2101-45f9-8aa3-a40c866e308b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{ccff1433-9f3a-4334-b2b9-94074b16f8fb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{bdefca68-7d92-4bc6-94b8-f37d8f4674b0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty">
+      <UniqueIdentifier>{adabb962-290c-4452-b231-573da5cdd3f2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\Source">
+      <UniqueIdentifier>{fae6d197-7008-4b51-8e3b-2db76b0ec4a5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\Include">
+      <UniqueIdentifier>{d82fd9b4-c83b-4758-bfbf-c73a811a4472}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources">
+      <UniqueIdentifier>{d2b4a91c-074c-4ee2-bcc6-a8e4b7c147f1}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Include\Shader.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Simulation.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\FBO.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Util.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\thirdparty\imgui\includes\imconfig.h">
+      <Filter>ThirdParty\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\thirdparty\imgui\includes\imgui.h">
+      <Filter>ThirdParty\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\thirdparty\imgui\includes\imgui_impl_glfw.h">
+      <Filter>ThirdParty\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\thirdparty\imgui\includes\imgui_impl_opengl3.h">
+      <Filter>ThirdParty\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\thirdparty\imgui\includes\imgui_internal.h">
+      <Filter>ThirdParty\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\thirdparty\imgui\includes\imstb_rectpack.h">
+      <Filter>ThirdParty\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\thirdparty\imgui\includes\imstb_textedit.h">
+      <Filter>ThirdParty\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\thirdparty\imgui\includes\imstb_truetype.h">
+      <Filter>ThirdParty\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\ShaderOp.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\VertexList.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Interface.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Source\Main.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Shader.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Simulation.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Util.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\opengl\glad.c">
+      <Filter>ThirdParty\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\imgui\includes\imgui.cpp">
+      <Filter>ThirdParty\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\imgui\includes\imgui_demo.cpp">
+      <Filter>ThirdParty\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\imgui\includes\imgui_draw.cpp">
+      <Filter>ThirdParty\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\imgui\includes\imgui_impl_glfw.cpp">
+      <Filter>ThirdParty\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\imgui\includes\imgui_impl_opengl3.cpp">
+      <Filter>ThirdParty\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\imgui\includes\imgui_widgets.cpp">
+      <Filter>ThirdParty\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\ShaderOp.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\VertexList.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Interface.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\FBO.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="Shaders\advection.f.glsl">
+      <Filter>Shaders</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\tex_coords.v.glsl">
+      <Filter>Shaders</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\jacobi.f.glsl">
+      <Filter>Shaders</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\subtract.f.glsl">
+      <Filter>Shaders</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\divergence.f.glsl">
+      <Filter>Shaders</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\gradient.f.glsl">
+      <Filter>Shaders</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\copy.f.glsl">
+      <Filter>Shaders</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\boundary.f.glsl">
+      <Filter>Shaders</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\add_impulse.f.glsl">
+      <Filter>Shaders</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\common.glsl">
+      <Filter>Shaders</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\scalar_vis.f.glsl">
+      <Filter>Shaders</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\vector_vis.f.glsl">
+      <Filter>Shaders</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\add_vorticity.f.glsl">
+      <Filter>Shaders</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\vorticity.f.glsl">
+      <Filter>Shaders</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Resources\imgui.ini">
+      <Filter>Resources</Filter>
+    </CopyFileToFolders>
+  </ItemGroup>
+</Project>
