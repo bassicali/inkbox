@@ -544,40 +544,14 @@ void InkBoxSimulation::ComputeFields(float delta_t)
     {
         float alpha = (vars.GridScale * vars.GridScale) / (vars.Viscosity * delta_t);
         float beta = alpha + 4.0f;
-        CopyFBO(fbos.Temp, fbos.Velocity.Front());
-        poissonSolver.Use();
-        poissonSolver.Shader().SetVec2("rdv", rdv);
-        poissonSolver.Shader().SetFloat("alpha", alpha);
-        poissonSolver.Shader().SetFloat("beta", beta);
-        poissonSolver.Shader().SetTexture("b", fbos.Temp, 1);
-
-        for (int i = 0; i < (NUM_JACOBI_ROUNDS & (~0x1)); i++)
-        {
-            fbos.Velocity.Back().Bind();
-            poissonSolver.Shader().SetTexture("x", fbos.Velocity.Front(), 0);
-            poissonSolver.Draw();
-            fbos.Velocity.Swap();
-        }
+        SolvePoissonSystem(fbos.Velocity, alpha, beta);
     }
 
     if (vars.DiffuseInk)
     {
         float alpha = (vars.GridScale * vars.GridScale) / (vars.InkViscosity * delta_t);
         float beta = alpha + 4.0;
-        CopyFBO(fbos.Temp, fbos.Ink.Front());
-        poissonSolver.Use();
-        poissonSolver.Shader().SetVec2("rdv", rdv);
-        poissonSolver.Shader().SetFloat("alpha", alpha);
-        poissonSolver.Shader().SetFloat("beta", beta);
-        poissonSolver.Shader().SetTexture("b", fbos.Temp, 1);
-
-        for (int i = 0; i < (NUM_JACOBI_ROUNDS & (~0x1)); i++)
-        {
-            fbos.Ink.Back().Bind();
-            poissonSolver.Shader().SetTexture("x", fbos.Ink.Front(), 0);
-            poissonSolver.Draw();
-            fbos.Ink.Swap();
-        }
+        SolvePoissonSystem(fbos.Ink, alpha, beta);
     }
 
     /***************************/
@@ -589,23 +563,7 @@ void InkBoxSimulation::ComputeFields(float delta_t)
     divergence.Compute();
 
     // Solve for P in: Laplacian(P) = div(W)
-    CopyFBO(fbos.Temp, fbos.Velocity.Back());
-    poissonSolver.Use();
-    poissonSolver.Shader().SetVec2("rdv", rdv);
-    poissonSolver.Shader().SetFloat("alpha", -vars.GridScale * vars.GridScale);
-    poissonSolver.Shader().SetFloat("beta", 4.0f);
-    poissonSolver.Shader().SetTexture("b", fbos.Temp, 1);
-
-    for (int i = 0; i < (NUM_JACOBI_ROUNDS & (~0x1)); i++)
-    {
-        // TODO: avoid the extra copy in this function
-        //ComputeBoundaryValues(fbos.Pressure, 1);
-
-        fbos.Pressure.Back().Bind();
-        poissonSolver.Shader().SetTexture("x", fbos.Pressure.Front(), 0);
-        poissonSolver.Draw();
-        fbos.Pressure.Swap();
-    }
+    SolvePoissonSystem(fbos.Pressure, fbos.Velocity.Back(), -vars.GridScale * vars.GridScale, 4.0f);
 
     // Calculate grad(P)
     gradient.SetOutput(&fbos.Pressure.Back());
@@ -632,6 +590,29 @@ void InkBoxSimulation::ComputeBoundaryValues(SwapFBO& swap, float scale)
     boundaries.Shader().SetFloat("scale", scale);
     boundaries.Compute();
     swap.Swap();
+}
+
+void InkBoxSimulation::SolvePoissonSystem(SwapFBO& swap, FBO& initial_value, float alpha, float beta)
+{
+    CopyFBO(fbos.Temp, initial_value);
+    poissonSolver.Use();
+    poissonSolver.Shader().SetVec2("rdv", rdv);
+    poissonSolver.Shader().SetFloat("alpha", alpha);
+    poissonSolver.Shader().SetFloat("beta", beta);
+    poissonSolver.Shader().SetTexture("b", fbos.Temp, 1);
+
+    for (int i = 0; i < (NUM_JACOBI_ROUNDS & (~0x1)); i++)
+    {
+        swap.Back().Bind();
+        poissonSolver.Shader().SetTexture("x", swap.Front(), 0);
+        poissonSolver.Draw();
+        swap.Swap();
+    }
+}
+
+void InkBoxSimulation::SolvePoissonSystem(SwapFBO& swap, float alpha, float beta)
+{
+    SolvePoissonSystem(swap, swap.Front(), alpha, beta);
 }
 
 void InkBoxSimulation::Terminate()

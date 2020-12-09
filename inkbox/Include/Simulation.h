@@ -55,6 +55,8 @@ private:
 	float timestep;
 	void ComputeFields(float delta_t);
 	void ComputeBoundaryValues(SwapFBO& swap, float scale);
+	void SolvePoissonSystem(SwapFBO& swap, FBO& initial_value, float alpha, float beta);
+	void SolvePoissonSystem(SwapFBO& swap, float alpha, float beta);
 
 	QuadShaderOp impulse;
 	QuadShaderOp vorticity;
