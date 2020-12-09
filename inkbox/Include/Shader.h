@@ -7,8 +7,6 @@
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
 
-#define USE_BEFORE_UNIFORM 1
-
 class FBO;
 
 enum class ShaderType

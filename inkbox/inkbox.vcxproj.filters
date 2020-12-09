@@ -69,6 +69,10 @@
     <ClInclude Include="Include\Interface.h">
       <Filter>Include</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="..\thirdparty\stb\stb_image.h">
+      <Filter>Include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Main.cpp">
@@ -163,5 +167,14 @@
     <CopyFileToFolders Include="Resources\imgui.ini">
       <Filter>Resources</Filter>
     </CopyFileToFolders>
+    <CopyFileToFolders Include="Resources\swirl.png">
+      <Filter>Resources</Filter>
+    </CopyFileToFolders>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Resources\swirl.ico" />
   </ItemGroup>
 </Project>

@@ -12,7 +12,6 @@
 #include "Interface.h"
 
 #define NUM_JACOBI_ROUNDS 30
-#define BREAK_ON_RCLICK 1
 
 struct SimulationFields
 {
@@ -52,11 +51,14 @@ private:
 
 	SimulationFields fbos;
 	SimulationVars vars;
+	ControlPanel controlPanel;
 	float timestep;
 	void ComputeFields(float delta_t);
 	void ComputeBoundaryValues(SwapFBO& swap, float scale);
 	void SolvePoissonSystem(SwapFBO& swap, FBO& initial_value, float alpha, float beta);
 	void SolvePoissonSystem(SwapFBO& swap, float alpha, float beta);
+	void TickDropletsMode();
+	glm::vec2 RandPos();
 
 	QuadShaderOp impulse;
 	QuadShaderOp vorticity;
@@ -68,8 +70,6 @@ private:
 	QuadShaderOp subtract;
 	BorderShaderOp boundaries;
 
-	void RenderUI();
-	void RegulateFrameRate();
 	void ProcessInput();
 
 	GLFWwindow* mainWindow;
@@ -77,7 +77,7 @@ private:
 	int width;
 	int height;
 	glm::vec2 rdv;
-	CursorState mouse;
+	ImpulseState impulseState;
 	VarTextBoxes ui;
 
 	VertexList quad;

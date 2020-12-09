@@ -9,10 +9,6 @@
 #include <GLFW/glfw3.h>
 #include <glm/vec3.hpp>
 
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
-
 #include "Shader.h"
 #include "Util.h"
 
@@ -54,6 +50,12 @@ InkBoxSimulation::InkBoxSimulation(const InkBoxWindows& app, int width, int heig
         s_Instance = this;
 
     ui.SetValues(vars.GridScale, vars.Viscosity, vars.InkViscosity, vars.Vorticity, vars.SplatRadius, vars.AdvectionDissipation, vars.InkAdvectionDissipation, vars.InkVolume);
+    controlPanel = ControlPanel(app.Settings, &vars, &ui, &impulseState, &fbos.VelocityVis, &fbos.PressureVis, &fbos.InkVis, &fbos.VorticityVis);
+}
+
+void InkBoxSimulation::Terminate()
+{
+    glfwTerminate();
 }
 
 bool InkBoxSimulation::CreateScene()
@@ -127,6 +129,9 @@ void InkBoxSimulation::WindowLoop()
         glfwPollEvents();
         ProcessInput();
 
+        if (vars.DropletsMode)
+            TickDropletsMode();
+
         // Update velocity, pressure, and ink fields
         ComputeFields(timestep);
 
@@ -175,142 +180,11 @@ void InkBoxSimulation::WindowLoop()
         glfwSwapBuffers(mainWindow);
 
         // Render ImGUI
-        glfwMakeContextCurrent(uiWindow);
-        RenderUI();
+        glfwMakeContextCurrent(controlPanel.WindowPtr());
+        controlPanel.Render();
+
         glfwSwapBuffers(uiWindow);
     }
-}
-
-void InkBoxSimulation::RenderUI()
-{
-#define TEXTBOX(text,var) ImGui::SetNextItemWidth(80); ImGui::InputText((text), (var), 16);
-    
-    static ImVec2 uv_min = ImVec2(0.0f, 1.0f);                 // Top-left
-    static ImVec2 uv_max = ImVec2(1.0f, 0.0f);                 // Lower-right
-    static ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
-    static ImVec4 border_col = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
-    static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-    static bool update = 0;
-
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-
-    ImGui::Begin("Settings");
-
-    ImGui::Text("Solution Components");
-    ImGui::Checkbox("Self Advection", &vars.SelfAdvect);
-    ImGui::Checkbox("Ink Advection", &vars.AdvectInk);
-    ImGui::Checkbox("Vorticity", &vars.AddVorticity);
-    ImGui::Checkbox("Diffusion", &vars.DiffuseVelocity);
-    ImGui::Checkbox("Ink Diffusion", &vars.DiffuseInk);
-    ImGui::Checkbox("External Forces", &vars.ExternalForces);
-    ImGui::Checkbox("Boundary Conditions", &vars.BoundariesEnabled);
-
-    ImGui::Separator();
-    ImGui::Text("Constants");
-    TEXTBOX("Grid Scale", ui.GridScale);
-    TEXTBOX("Viscosity", ui.Viscosity);
-    TEXTBOX("Ink Viscosity", ui.InkViscosity);
-    TEXTBOX("Vorticity##3", ui.Vorticity);
-    TEXTBOX("Adv. Dissipation", ui.AdvDissipation);
-    TEXTBOX("Ink Dissipation", ui.InkAdvDissipation);
-    TEXTBOX("Force Radius", ui.SplatRadius);
-    TEXTBOX("Ink Volume", ui.InkVolume);
-
-    ImGui::Separator();
-    if (ImGui::Button("Update"))
-        update = true;
-    if (update)
-    {
-        ui.UpdateVars(vars);
-        update = false;
-    }
-
-    ImGui::Separator();
-    int* radio_field = (int*)(&vars.DisplayField);
-    ImGui::RadioButton("Ink", radio_field, 0); 
-    ImGui::SameLine();
-    ImGui::RadioButton("Velocity", radio_field, 1);
-    ImGui::SameLine();
-    ImGui::RadioButton("Pressure", radio_field, 2);
-    ImGui::SameLine();
-    ImGui::RadioButton("Vorticity##1", radio_field, 3);
-
-    ImGui::Separator();
-    ImGui::Text("Force: (%.0f,%.0f) | Pos0: (%.0f,%.0f) | Pos1: (%.0f,%.0f)", mouse.Diff.x, mouse.Diff.y, mouse.LastPos.x, mouse.LastPos.y, mouse.CurrentPos.x, mouse.CurrentPos.y);
-    
-    ImGui::Separator();
-    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-    ImGui::End();
-
-    float ratio = width / height;
-    ImVec2 dims(150, 150 / ratio);
-
-    ImGui::Begin("Ink");
-    ImGui::Image((ImTextureID)(intptr_t)fbos.InkVis.TextureId(), dims, uv_min, uv_max, tint_col, border_col);
-    ImGui::End();
-
-    ImGui::Begin("Velocity");
-    ImGui::Image((ImTextureID)(intptr_t)fbos.VelocityVis.TextureId(), dims, uv_min, uv_max, tint_col, border_col);
-    ImGui::End();
-
-    ImGui::Begin("Pressure");
-    ImGui::Image((ImTextureID)(intptr_t)fbos.PressureVis.TextureId(), dims, uv_min, uv_max, tint_col, border_col);
-    ImGui::End();
-
-    ImGui::Begin("Vorticity##2");
-    ImGui::Image((ImTextureID)(intptr_t)fbos.VorticityVis.TextureId(), dims, uv_min, uv_max, tint_col, border_col);
-    ImGui::End();
-
-    // Rendering
-    ImGui::Render();
-    int display_w, display_h;
-    glfwGetFramebufferSize(uiWindow, &display_w, &display_h);
-    glViewport(0, 0, display_w, display_h);
-    glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
-    glClear(GL_COLOR_BUFFER_BIT);
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-}
-
-void InkBoxSimulation::RegulateFrameRate()
-{
-    using namespace std::chrono;
-
-    static system_clock::time_point last_time;
-    static long delay_us = 15000;
-    static int frames = 0;
-    static int fps_echo_count = 0;
-    const float TARGET = 1000 / 60.0;
-
-    if (++frames >= 20)
-    {
-        auto now = system_clock::now();
-        float avg = 0.f;
-
-        if (last_time.time_since_epoch().count() != 0)
-        {
-            duration<float, milli> time_taken = now - last_time;
-            avg = time_taken.count() / frames;
-
-            if (avg > TARGET && delay_us > 500)
-                delay_us -= 500;
-            else if (avg < TARGET)
-                delay_us += 500;
-        }
-
-        if (fps_echo_count++ >= 10)
-        {
-            LOG_INFO("FPS: %.2f Hz\n", 1000 / avg);
-            fps_echo_count = 0;
-        }
-
-        last_time = now;
-        frames = 0;
-    }
-
-    if (delay_us != 0)
-        this_thread::sleep_for(microseconds(delay_us));
 }
 
 void InkBoxSimulation::ProcessInput()
@@ -322,7 +196,7 @@ void InkBoxSimulation::ProcessInput()
 
     double x = 0, y = 0;
     glfwGetCursorPos(mainWindow, &x, &y);
-    mouse.Update(x, height - y, glfwGetMouseButton(mainWindow, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS);
+    impulseState.Update(x, height - y, glfwGetMouseButton(mainWindow, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS);
 }
 
 void InkBoxSimulation::SetDimensions(int w, int h)
@@ -350,7 +224,7 @@ bool _AddFragShader(GLShaderProgram& program, GLShader& vShader, GLShader& fShad
 
 bool InkBoxSimulation::CreateShaderOps()
 {
-#define ADD_SHADER(obj,file) { GLShader fs(file, ShaderType::Fragment); if (!_AddFragShader(obj, vs, fs)) return false; obj.SetVec2("stride", rdv); }
+#define ADD_SHADER(obj,file) { GLShader fs(file, ShaderType::Fragment); if (!_AddFragShader(obj, vs, fs)) return false; obj.Use(); obj.SetVec2("stride", rdv); }
 
     GLShader vs("tex_coords.v.glsl", ShaderType::Vertex);
     if (!vs.Compile())
@@ -488,10 +362,10 @@ void InkBoxSimulation::ComputeFields(float delta_t)
     /**********************************/
     /******* FORCE APPLICATION ********/
     /**********************************/
-    if (vars.ExternalForces && mouse.IsActive())
+    if (vars.ExternalForces && impulseState.Active)
     {
         const float MAX_RADIUS = 1.0f;
-        auto diff = mouse.Diff * rdv;
+        auto diff = impulseState.Delta * rdv;
 
         // clamp to some range
         vec3 force(min(max(diff.x, -rdv.x), rdv.x),
@@ -500,26 +374,23 @@ void InkBoxSimulation::ComputeFields(float delta_t)
 
         impulse.Use();
         impulse.SetOutput(&fbos.Velocity.Back());
-        impulse.Shader().SetVec2("position", mouse.CurrentPos * rdv);
+        impulse.Shader().SetVec2("position", impulseState.CurrentPos * rdv);
         impulse.Shader().SetVec3("force", force);
         impulse.Shader().SetFloat("radius", vars.SplatRadius);
         impulse.Shader().SetTexture("velocity", fbos.Velocity, 0);
         impulse.Compute();
         fbos.Velocity.Swap();
 
-        force = vec3(150.0f, 126.0f, 199.0f) / 255.0f;
+        force = vec3(0.54, 0.2, 0);
 
         impulse.Use();
         impulse.SetOutput(&fbos.Ink.Back());
-        impulse.Shader().SetVec2("position", mouse.CurrentPos * rdv);
+        impulse.Shader().SetVec2("position", impulseState.CurrentPos * rdv);
         impulse.Shader().SetVec3("force", force);
         impulse.Shader().SetFloat("radius", vars.InkVolume);
         impulse.Shader().SetTexture("velocity", fbos.Ink, 0);
         impulse.Compute();
         fbos.Ink.Swap();
-
-        if (mouse.IsActive() && mouse.Mode == SplatMode::ClickAndRelease)
-            mouse.Reset();
     }
 
     /***************************/
@@ -615,9 +486,30 @@ void InkBoxSimulation::SolvePoissonSystem(SwapFBO& swap, float alpha, float beta
     SolvePoissonSystem(swap, swap.Front(), alpha, beta);
 }
 
-void InkBoxSimulation::Terminate()
+vec2 InkBoxSimulation::RandPos()
 {
-    glfwTerminate();
+    int x = rand() % width;
+    int y = rand() % height;
+    return vec2(x, y);
+}
+
+void InkBoxSimulation::TickDropletsMode()
+{
+    static float acc = 0;
+    static float next_drop = 0;
+    static ivec2 freq_range(200, 1500);
+
+    acc += (timestep * 1000);
+    if (acc >= next_drop)
+    {
+        acc = 0;
+        next_drop = (rand() % (freq_range.y - freq_range.x)) + freq_range.x;
+
+        impulseState.LastPos = RandPos();
+        impulseState.CurrentPos = RandPos();
+        impulseState.Delta = impulseState.CurrentPos - impulseState.LastPos;
+        impulseState.Active = true;
+    }
 }
 
 void InkBoxSimulation::CopyFBO(FBO& dest, FBO& src)

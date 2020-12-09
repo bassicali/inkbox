@@ -9,6 +9,9 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -16,9 +19,12 @@
 #include "Util.h"
 
 #define UI_WIN_W 745
-#define UI_WIN_H 525
+#define UI_WIN_H 590
 
 using namespace std;
+
+regex re_colour("rgb\\((\\d+h?),(\\d+h?),(\\d+h?)\\)", regex_constants::icase | regex_constants::optimize | regex_constants::ECMAScript);
+regex re_colour_hex("([a-f0-9]{2})([a-f0-9]{2})([a-f0-9]{2})h", regex_constants::icase | regex_constants::optimize | regex_constants::ECMAScript);
 
 void GLErrorCallback(int error_code, const char* description)
 {
@@ -91,6 +97,12 @@ bool InkBoxWindows::InitGLContexts(int width, int height)
         return false;
     }
 
+    GLFWimage icons[1]; 
+    icons[0].pixels = stbi_load("swirl.png", &icons[0].width, &icons[0].height, 0, 4); 
+    glfwSetWindowIcon(Settings, 1, icons);
+    glfwSetWindowIcon(Main, 1, icons);
+    stbi_image_free(icons[0].pixels);
+
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -108,81 +120,175 @@ bool InkBoxWindows::InitGLContexts(int width, int height)
 
 
 ///////////////////////////
-///     CursorState     ///
+///    ControlPanel     ///
 ///////////////////////////
 
-CursorState::CursorState()
-    : ButtonDown(false)
+ControlPanel::ControlPanel()
+    : window(nullptr)
+    , simvars(nullptr)
+    , texts(nullptr)
+    , impulse(nullptr)
+    , velocity(nullptr)
+    , pressure(nullptr)
+    , ink(nullptr)
+    , vorticity(nullptr)
+{
+}
+
+ControlPanel::ControlPanel(GLFWwindow* win, SimulationVars* vars, VarTextBoxes* texts, ImpulseState* impulse, FBO* ufbo, FBO* pfbo, FBO* ifbo, FBO* vfbo)
+    : window(win)
+    , simvars(vars)
+    , texts(texts)
+    , impulse(impulse)
+    , velocity(ufbo)
+    , pressure(pfbo)
+    , ink(ifbo)
+    , vorticity(vfbo)
+{
+}
+
+void ControlPanel::Render()
+{
+#define TEXTBOX(text,var) ImGui::SetNextItemWidth(80); ImGui::InputText((text), (var), 16);
+
+    static ImVec2 uv_min = ImVec2(0.0f, 1.0f);                 // Top-left
+    static ImVec2 uv_max = ImVec2(1.0f, 0.0f);                 // Lower-right
+    static ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+    static ImVec4 border_col = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+    //static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    static ImVec4 clear_color = ImVec4(0.59f, 0.49f, 0.78f, 1.00f);
+    static bool update = 0;
+
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    ImGui::Begin("Settings");
+
+    ImGui::Text("Constants");
+    ImGui::Checkbox("Self Advection", &simvars->SelfAdvect);
+    ImGui::Checkbox("Ink Advection", &simvars->AdvectInk);
+    ImGui::Checkbox("Vorticity", &simvars->AddVorticity);
+    ImGui::Checkbox("Diffusion", &simvars->DiffuseVelocity);
+    ImGui::Checkbox("Ink Diffusion", &simvars->DiffuseInk);
+    ImGui::Checkbox("External Forces", &simvars->ExternalForces);
+    ImGui::Checkbox("Boundary Conditions", &simvars->BoundariesEnabled);
+    TEXTBOX("Ink Colour", texts->InkColour);
+
+    ImGui::Separator();
+    ImGui::Text("Variables");
+    TEXTBOX("Grid Scale", texts->GridScale);
+    TEXTBOX("Viscosity", texts->Viscosity);
+    TEXTBOX("Ink Viscosity", texts->InkViscosity);
+    TEXTBOX("Vorticity##3", texts->Vorticity);
+    TEXTBOX("Adv. Dissipation", texts->AdvDissipation);
+    TEXTBOX("Ink Dissipation", texts->InkAdvDissipation);
+    TEXTBOX("Force Radius", texts->SplatRadius);
+    TEXTBOX("Ink Volume", texts->InkVolume);
+    ImGui::Checkbox("Droplets", &simvars->DropletsMode);
+
+    ImGui::Separator();
+    if (ImGui::Button("Update"))
+        update = true;
+    if (update)
+    {
+        texts->UpdateVars(*simvars);
+        update = false;
+    }
+
+    ImGui::Separator();
+    ImGui::Text("Display Field");
+    int* radio_field = (int*)(&simvars->DisplayField);
+    ImGui::RadioButton("Ink", radio_field, 0);
+    ImGui::SameLine();
+    ImGui::RadioButton("Velocity", radio_field, 1);
+    ImGui::SameLine();
+    ImGui::RadioButton("Pressure", radio_field, 2);
+    ImGui::SameLine();
+    ImGui::RadioButton("Vorticity##1", radio_field, 3);
+
+    ImGui::Separator();
+    ImGui::Text("Force: (%.0f,%.0f) | Pos0: (%.0f,%.0f) | Pos1: (%.0f,%.0f)", impulse->Delta.x, impulse->Delta.y, impulse->LastPos.x, impulse->LastPos.y, impulse->CurrentPos.x, impulse->CurrentPos.y);
+
+    ImGui::Separator();
+    ImGui::Text("Frame Rate: %.3f ms (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+    ImGui::End();
+
+    float ratio = (float)velocity->Width() / velocity->Height();
+    ImVec2 dims(150, 150 / ratio);
+
+    ImGui::Begin("Ink");
+    ImGui::Image((ImTextureID)(intptr_t)ink->TextureId(), dims, uv_min, uv_max, tint_col, border_col);
+    ImGui::End();
+
+    ImGui::Begin("Velocity");
+    ImGui::Image((ImTextureID)(intptr_t)velocity->TextureId(), dims, uv_min, uv_max, tint_col, border_col);
+    ImGui::End();
+
+    ImGui::Begin("Pressure");
+    ImGui::Image((ImTextureID)(intptr_t)pressure->TextureId(), dims, uv_min, uv_max, tint_col, border_col);
+    ImGui::End();
+
+    ImGui::Begin("Vorticity##2");
+    ImGui::Image((ImTextureID)(intptr_t)vorticity->TextureId(), dims, uv_min, uv_max, tint_col, border_col);
+    ImGui::End();
+
+    // Rendering
+    ImGui::Render();
+    int display_w, display_h;
+    glfwGetFramebufferSize(window, &display_w, &display_h);
+    glViewport(0, 0, display_w, display_h);
+    glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
+    glClear(GL_COLOR_BUFFER_BIT);
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+
+
+
+///////////////////////////
+///     ImpulseState     ///
+///////////////////////////
+
+ImpulseState::ImpulseState()
+    : Active(false)
     , LastPos()
     , CurrentPos()
-    , Diff()
-    , ButtonReleased(false)
-    , Mode(SplatMode::Continuous)
+    , Delta()
 {
 }
 
-void CursorState::Update(float x, float y, bool currButtonDown)
+void ImpulseState::Update(float x, float y, bool currButtonDown)
 {
-    if (Mode == SplatMode::Continuous)
+    if (!Active && currButtonDown)
     {
-        if (!ButtonDown && currButtonDown)
-        {
-            CurrentPos.x = x;
-            CurrentPos.y = y;
-            ButtonDown = true;
-        }
-        else if (ButtonDown && currButtonDown)
-        {
-            auto temp = CurrentPos;
-            CurrentPos.x = x;
-            CurrentPos.y = y;
-            LastPos = temp;
-        }
-        else if (ButtonDown && !currButtonDown)
-        {
-            LastPos.x = LastPos.y = 0.f;
-            Reset();
-        }
+        CurrentPos.x = x;
+        CurrentPos.y = y;
+        Active = true;
     }
-    else
+    else if (Active && currButtonDown)
     {
-        if (!ButtonDown && currButtonDown)
-        {
-            LastPos.x = x;
-            LastPos.y = y;
-            ButtonDown = true;
-            ButtonReleased = false;
-        }
-        else if (ButtonDown && !currButtonDown)
-        {
-            CurrentPos.x = x;
-            CurrentPos.y = y;
-            ButtonDown = false;
-            ButtonReleased = true;
-        }
+        auto temp = CurrentPos;
+        CurrentPos.x = x;
+        CurrentPos.y = y;
+        LastPos = temp;
+    }
+    else if (Active && !currButtonDown)
+    {
+        LastPos.x = LastPos.y = 0.f;
+        Reset();
     }
 
-    Diff = CurrentPos - LastPos;
+    Delta = CurrentPos - LastPos;
 }
 
-bool CursorState::IsActive() const
-{
-    if (Mode == SplatMode::Continuous && LastPos.x != 0)
-        return ButtonDown;
-    else if (Mode == SplatMode::ClickAndRelease)
-        return ButtonReleased;
-
-    return false;
-}
-
-void CursorState::Reset()
+void ImpulseState::Reset()
 {
     static glm::vec2 zero(0, 0);
-    Diff = zero;
+    Delta = zero;
     CurrentPos = zero;
     LastPos = zero;
-    ButtonReleased = false;
-    ButtonDown = false;
+    Active = false;
 }
 
 ///////////////////////////
@@ -198,6 +304,7 @@ VarTextBoxes::VarTextBoxes()
     memset(AdvDissipation, 0, TEXTBUFF_LEN);
     memset(InkAdvDissipation, 0, TEXTBUFF_LEN);
     memset(Vorticity, 0, TEXTBUFF_LEN);
+    memset(InkColour, 0, TEXTBUFF_LEN);
 }
 
 void FormatFloatText(char cstr[TEXTBOX_LEN], float value)
@@ -263,6 +370,7 @@ SimulationVars::SimulationVars()
     , AddVorticity(true)
     , ExternalForces(true)
     , BoundariesEnabled(true)
-    , DisplayField(SimulationField::Velocity)
+    , DropletsMode(false)
+    , DisplayField(SimulationField::Ink)
 {
 }

@@ -19,6 +19,7 @@
     <ClInclude Include="..\thirdparty\imgui\includes\imstb_rectpack.h" />
     <ClInclude Include="..\thirdparty\imgui\includes\imstb_textedit.h" />
     <ClInclude Include="..\thirdparty\imgui\includes\imstb_truetype.h" />
+    <ClInclude Include="..\thirdparty\stb\stb_image.h" />
     <ClInclude Include="Include\FBO.h" />
     <ClInclude Include="Include\Interface.h" />
     <ClInclude Include="Include\Shader.h" />
@@ -26,6 +27,7 @@
     <ClInclude Include="Include\Simulation.h" />
     <ClInclude Include="Include\Util.h" />
     <ClInclude Include="Include\VertexList.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\thirdparty\imgui\includes\imgui.cpp" />
@@ -91,6 +93,13 @@
       <FileType>Document</FileType>
     </CopyFileToFolders>
   </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Resources\swirl.ico" />
+    <CopyFileToFolders Include="Resources\swirl.png" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -127,14 +136,14 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(ProjectDir)\Include;$(ProjectDir)..\thirdparty\opengl\includes;$(ProjectDir)..\thirdparty\glfw\includes;$(ProjectDir)..\thirdparty\imgui\includes;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\Include;$(ProjectDir)..\thirdparty\opengl\includes;$(ProjectDir)..\thirdparty\glfw\includes;$(ProjectDir)..\thirdparty\imgui\includes;$(ProjectDir)..\thirdparty\stb;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)..\thirdparty\glfw\lib-vc2019;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(Configuration)-$(Platform)\</OutDir>
     <IntDir>$(SolutionDir)bin\intermediate\$(Configuration)-$(Platform)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(ProjectDir)\Include;$(ProjectDir)..\thirdparty\opengl\includes;$(ProjectDir)..\thirdparty\glfw\includes;$(ProjectDir)..\thirdparty\imgui\includes;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\Include;$(ProjectDir)..\thirdparty\opengl\includes;$(ProjectDir)..\thirdparty\glfw\includes;$(ProjectDir)..\thirdparty\imgui\includes;$(ProjectDir)..\thirdparty\stb;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)..\thirdparty\glfw\lib-vc2019;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(Configuration)-$(Platform)\</OutDir>
     <IntDir>$(SolutionDir)bin\intermediate\$(Configuration)-$(Platform)\</IntDir>

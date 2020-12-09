@@ -34,6 +34,8 @@ public:
 	virtual int TextureId() override { return textureId; }
 
 	void SetDimensions(int w, int h);
+	int Width() const { return width; }
+	int Height() const { return height; }
 
 	int Marker;
 

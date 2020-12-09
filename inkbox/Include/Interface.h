@@ -3,6 +3,8 @@
 
 #include <glm/vec2.hpp>
 
+#include "FBO.h"
+
 #define TEXTBOX_LEN 16
 #define TEXTBUFF_LEN (TEXTBOX_LEN * sizeof(char))
 
@@ -21,12 +23,6 @@ struct InkBoxWindows
 	glm::vec2 ViewportSize;
 };
 
-enum class SplatMode
-{
-	Continuous,
-	ClickAndRelease
-};
-
 enum class SimulationField
 {
 	Ink,
@@ -35,21 +31,17 @@ enum class SimulationField
 	Vorticity
 };
 
-struct CursorState
+struct ImpulseState
 {
-	CursorState();
+	ImpulseState();
 
 	void Update(float x, float y, bool buttonDown);
-	bool IsActive() const;
 	void Reset();
 
-	SplatMode Mode;
-	bool ButtonReleased;
-	bool ButtonDown;
 	glm::vec2 LastPos;
 	glm::vec2 CurrentPos;
-
-	glm::vec2 Diff;
+	bool Active;
+	glm::vec2 Delta;
 };
 
 struct SimulationVars
@@ -64,6 +56,7 @@ struct SimulationVars
 	bool PressureEnabled;
 	bool AddVorticity;
 	bool BoundariesEnabled;
+	bool DropletsMode;
 	float GridScale;
 	float SplatRadius;
 	float InkVolume;
@@ -88,4 +81,25 @@ struct VarTextBoxes
 	char InkViscosity[TEXTBOX_LEN];
 	char Vorticity[TEXTBOX_LEN];
 	char InkVolume[TEXTBOX_LEN];
+	char InkColour[TEXTBOX_LEN];
+};
+
+
+class ControlPanel
+{
+public:
+	ControlPanel();
+	ControlPanel(GLFWwindow* win, SimulationVars* vars, VarTextBoxes* texts, ImpulseState* impulse, FBO* ufbo, FBO* pfbo, FBO* ifbo, FBO* vfbo);
+	void Render();
+	GLFWwindow* WindowPtr() const { return window; }
+
+private:
+	GLFWwindow* window;
+	SimulationVars* simvars;
+	VarTextBoxes* texts;
+	ImpulseState* impulse;
+	FBO* velocity;
+	FBO* vorticity;
+	FBO* pressure;
+	FBO* ink;
 };

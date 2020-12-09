@@ -57,49 +57,31 @@ void GLShaderProgram::Use()
 
 void GLShaderProgram::SetInt(std::string name, int value)
 {
-#if USE_BEFORE_UNIFORM
-	Use();
-#endif
 	_GL_WRAP2(glUniform1i, GetUniformLoc(name), value);
 }
 
 void GLShaderProgram::SetFloat(std::string name, float value)
 {
-#if USE_BEFORE_UNIFORM
-	Use();
-#endif
 	_GL_WRAP2(glUniform1f, GetUniformLoc(name), value);
 }
 
 void GLShaderProgram::SetVec2(string name, glm::vec2 value)
 {
-#if USE_BEFORE_UNIFORM
-	Use();
-#endif
 	_GL_WRAP3(glUniform2fv, GetUniformLoc(name), 1, &value[0]);
 }
 
 void GLShaderProgram::SetVec3(std::string name, glm::vec3 value)
 {
-#if USE_BEFORE_UNIFORM
-	Use();
-#endif
 	_GL_WRAP3(glUniform3fv, GetUniformLoc(name), 1, &value[0]);
 }
 
 void GLShaderProgram::SetVec2(std::string name, float x, float y)
 {
-#if USE_BEFORE_UNIFORM
-	Use();
-#endif
 	_GL_WRAP3(glUniform2f, GetUniformLoc(name), x, y);
 }
 
 void GLShaderProgram::SetVec4(std::string name, glm::vec4 value)
 {
-#if USE_BEFORE_UNIFORM
-	Use();
-#endif
 	_GL_WRAP3(glUniform4fv, GetUniformLoc(name), 1, &value[0]);
 }
 
