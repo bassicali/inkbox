@@ -136,14 +136,14 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(ProjectDir)\Include;$(ProjectDir)..\thirdparty\opengl\includes;$(ProjectDir)..\thirdparty\glfw\includes;$(ProjectDir)..\thirdparty\imgui\includes;$(ProjectDir)..\thirdparty\stb;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\Include;$(ProjectDir)..\thirdparty\opengl\includes;$(ProjectDir)..\thirdparty\glfw\includes;$(ProjectDir)..\thirdparty\imgui\includes;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)..\thirdparty\glfw\lib-vc2019;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(Configuration)-$(Platform)\</OutDir>
     <IntDir>$(SolutionDir)bin\intermediate\$(Configuration)-$(Platform)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(ProjectDir)\Include;$(ProjectDir)..\thirdparty\opengl\includes;$(ProjectDir)..\thirdparty\glfw\includes;$(ProjectDir)..\thirdparty\imgui\includes;$(ProjectDir)..\thirdparty\stb;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\Include;$(ProjectDir)..\thirdparty\opengl\includes;$(ProjectDir)..\thirdparty\glfw\includes;$(ProjectDir)..\thirdparty\imgui\includes;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)..\thirdparty\glfw\lib-vc2019;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(Configuration)-$(Platform)\</OutDir>
     <IntDir>$(SolutionDir)bin\intermediate\$(Configuration)-$(Platform)\</IntDir>

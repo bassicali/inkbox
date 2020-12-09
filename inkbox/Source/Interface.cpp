@@ -9,13 +9,14 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
+#include "../resource.h"
 #include "Util.h"
 
 #define UI_WIN_W 745
@@ -97,11 +98,20 @@ bool InkBoxWindows::InitGLContexts(int width, int height)
         return false;
     }
 
-    GLFWimage icons[1]; 
-    icons[0].pixels = stbi_load("swirl.png", &icons[0].width, &icons[0].height, 0, 4); 
-    glfwSetWindowIcon(Settings, 1, icons);
-    glfwSetWindowIcon(Main, 1, icons);
-    stbi_image_free(icons[0].pixels);
+    HINSTANCE hinst = GetModuleHandle(nullptr);
+    HICON hico = LoadIcon(hinst, MAKEINTRESOURCE(IDI_ICON1));
+
+    HWND hwnd = glfwGetWin32Window(Main);
+    SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hico);
+    SendMessage(hwnd, WM_SETICON, ICON_BIG, (LPARAM)hico);
+
+    hwnd = glfwGetWin32Window(Settings);
+    SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hico);
+    SendMessage(hwnd, WM_SETICON, ICON_BIG, (LPARAM)hico);
+
+    hwnd = GetConsoleWindow();
+    SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hico);
+    SendMessage(hwnd, WM_SETICON, ICON_BIG, (LPARAM)hico);
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
