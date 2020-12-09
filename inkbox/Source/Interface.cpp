@@ -23,9 +23,7 @@
 #define UI_WIN_H 590
 
 using namespace std;
-
-regex re_colour("rgb\\((\\d+h?),(\\d+h?),(\\d+h?)\\)", regex_constants::icase | regex_constants::optimize | regex_constants::ECMAScript);
-regex re_colour_hex("([a-f0-9]{2})([a-f0-9]{2})([a-f0-9]{2})h", regex_constants::icase | regex_constants::optimize | regex_constants::ECMAScript);
+using namespace glm;
 
 void GLErrorCallback(int error_code, const char* description)
 {
@@ -38,7 +36,7 @@ void _BufferResizeCallback(GLFWwindow* window, int width, int height)
     //{
     //    s_Instance->width = width;
     //    s_Instance->height = height;
-    //    s_Instance->rdv = glm::vec2(1.0f / width, 1.0f / height);
+    //    s_Instance->rdv = vec2(1.0f / width, 1.0f / height);
     //}
 
     //_GL_WRAP4(glViewport, 0, 0, width, height);
@@ -124,7 +122,7 @@ bool InkBoxWindows::InitGLContexts(int width, int height)
 
     ImGui_ImplGlfw_InitForOpenGL(Settings, true);
     ImGui_ImplOpenGL3_Init("#version 330 core");
-    ViewportSize = glm::vec2(width, height);
+    ViewportSize = vec2(width, height);
     return true;
 }
 
@@ -183,7 +181,11 @@ void ControlPanel::Render()
     ImGui::Checkbox("Ink Diffusion", &simvars->DiffuseInk);
     ImGui::Checkbox("External Forces", &simvars->ExternalForces);
     ImGui::Checkbox("Boundary Conditions", &simvars->BoundariesEnabled);
-    TEXTBOX("Ink Colour", texts->InkColour);
+
+    // ImVec4 and glm::vec4 have the same layout
+    ImGui::ColorEdit4("Ink Colour", (float*)&simvars->InkColour, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
+    ImGui::SameLine();
+    ImGui::Text("Ink Colour");
 
     ImGui::Separator();
     ImGui::Text("Variables");
@@ -294,7 +296,7 @@ void ImpulseState::Update(float x, float y, bool currButtonDown)
 
 void ImpulseState::Reset()
 {
-    static glm::vec2 zero(0, 0);
+    static vec2 zero(0, 0);
     Delta = zero;
     CurrentPos = zero;
     LastPos = zero;
@@ -314,7 +316,6 @@ VarTextBoxes::VarTextBoxes()
     memset(AdvDissipation, 0, TEXTBUFF_LEN);
     memset(InkAdvDissipation, 0, TEXTBUFF_LEN);
     memset(Vorticity, 0, TEXTBUFF_LEN);
-    memset(InkColour, 0, TEXTBUFF_LEN);
 }
 
 void FormatFloatText(char cstr[TEXTBOX_LEN], float value)
@@ -349,6 +350,28 @@ void VarTextBoxes::SetValues(float gridscale, float viscosity, float ink_viscosi
 
 void VarTextBoxes::UpdateVars(SimulationVars& vars)
 {
+    //static regex re_colour("rgb\\((\\d+),(\\d+),(\\d+)\\)", regex_constants::icase | regex_constants::optimize | regex_constants::ECMAScript);
+    //static regex re_colour_hex("#?([a-f0-9]{2})([a-f0-9]{2})([a-f0-9]{2})", regex_constants::icase | regex_constants::optimize | regex_constants::ECMAScript);
+
+    //smatch match;
+    //string str(InkColour);
+    //if (regex_match(str, match, re_colour))
+    //{
+    //    auto r = stof(match[1].str());
+    //    auto g = stof(match[2].str());
+    //    auto b = stof(match[3].str());
+
+    //    vars.InkColour = vec4(r, g, b, 1);
+    //}
+    //else if (regex_match(str, match, re_colour_hex))
+    //{
+    //    float r = stoi(match[1].str(), nullptr, 16);
+    //    float g = stoi(match[2].str(), nullptr, 16);
+    //    float b = stoi(match[3].str(), nullptr, 16);
+
+    //    vars.InkColour = vec4(r, g, b, 1) / 255.0f;
+    //}
+
     vars.Viscosity = stof(Viscosity);
     vars.InkViscosity = stof(InkViscosity);
     vars.Vorticity = stof(Vorticity);
@@ -381,6 +404,7 @@ SimulationVars::SimulationVars()
     , ExternalForces(true)
     , BoundariesEnabled(true)
     , DropletsMode(false)
+    , InkColour(0.54, 0.2, 0.78, 1.0)
     , DisplayField(SimulationField::Ink)
 {
 }

@@ -170,6 +170,9 @@
     <CopyFileToFolders Include="Resources\swirl.png">
       <Filter>Resources</Filter>
     </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\ink_vis.f.glsl">
+      <Filter>Shaders</Filter>
+    </CopyFileToFolders>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc" />

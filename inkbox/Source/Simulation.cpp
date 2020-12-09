@@ -145,9 +145,11 @@ void InkBoxSimulation::WindowLoop()
         DrawQuad();
 
         fbos.InkVis.Bind();
-        vectorVisShader.SetVec4("bias", vec4(0, 0, 0, 0));
-        vectorVisShader.SetVec4("scale", vec4(1, 1, 1, 1));
-        vectorVisShader.SetTexture("field", fbos.Ink, 0);
+        inkVisShader.Use();
+        vec4 bias(0, 0, vars.InkColour.z, 0);
+        inkVisShader.SetVec4("bias", bias);
+        inkVisShader.SetVec4("scale", vec4(1, 1, 1, 1));
+        inkVisShader.SetTexture("field", fbos.Ink, 0);
         DrawQuad();
 
         fbos.PressureVis.Bind();
@@ -242,6 +244,7 @@ bool InkBoxSimulation::CreateShaderOps()
     ADD_SHADER(addVorticityShader,  "add_vorticity.f.glsl")
     ADD_SHADER(vectorVisShader,     "vector_vis.f.glsl")
     ADD_SHADER(scalarVisShader,     "scalar_vis.f.glsl")
+    ADD_SHADER(inkVisShader,        "ink_vis.f.glsl")
     ADD_SHADER(copyShader,          "copy.f.glsl")
 
     vec2 dimensions(width, height);
@@ -365,11 +368,11 @@ void InkBoxSimulation::ComputeFields(float delta_t)
     if (vars.ExternalForces && impulseState.Active)
     {
         const float MAX_RADIUS = 1.0f;
-        auto diff = impulseState.Delta * rdv;
+        auto diff = impulseState.Delta;
 
         // clamp to some range
-        vec3 force(min(max(diff.x, -rdv.x), rdv.x),
-                    min(max(diff.y, -rdv.y), rdv.y),
+        vec3 force(min(max(diff.x, -vars.GridScale), vars.GridScale),
+                    min(max(diff.y, -vars.GridScale), vars.GridScale),
                     0);
 
         impulse.Use();

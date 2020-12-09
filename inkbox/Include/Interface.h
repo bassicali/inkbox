@@ -65,6 +65,7 @@ struct SimulationVars
 	float Vorticity;
 	float AdvectionDissipation;
 	float InkAdvectionDissipation;
+	glm::vec4 InkColour;
 	SimulationField DisplayField;
 };
 
@@ -81,7 +82,6 @@ struct VarTextBoxes
 	char InkViscosity[TEXTBOX_LEN];
 	char Vorticity[TEXTBOX_LEN];
 	char InkVolume[TEXTBOX_LEN];
-	char InkColour[TEXTBOX_LEN];
 };
 
 

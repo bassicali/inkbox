@@ -15,7 +15,7 @@ void main()
 {
 	vec2 diff = position - coord;
 	float x = -dot(diff,diff) / radius;
-	vec3 effect = normalize(force) * exp(x);
+	vec3 effect = force * exp(x);
 	vec3 u0 = texture2D(velocity, coord).xyz;
 
 	FragColor = vec4(u0 + effect, 1.0);

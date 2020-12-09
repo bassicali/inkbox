@@ -96,6 +96,7 @@ private:
 	GLShaderProgram vorticityShader;
 	GLShaderProgram addVorticityShader;
 	GLShaderProgram scalarVisShader;
+	GLShaderProgram inkVisShader;
 	GLShaderProgram vectorVisShader;
 	GLShaderProgram copyShader;
 };
