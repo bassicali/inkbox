@@ -198,7 +198,9 @@ void InkBoxSimulation::ProcessInput()
 
     double x = 0, y = 0;
     glfwGetCursorPos(mainWindow, &x, &y);
-    impulseState.Update(x, height - y, glfwGetMouseButton(mainWindow, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS);
+    impulseState.Update(x, height - y, 
+        glfwGetMouseButton(mainWindow, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS, 
+        glfwGetMouseButton(mainWindow, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS);
 }
 
 void InkBoxSimulation::SetDimensions(int w, int h)
@@ -365,7 +367,7 @@ void InkBoxSimulation::ComputeFields(float delta_t)
     /**********************************/
     /******* FORCE APPLICATION ********/
     /**********************************/
-    if (vars.ExternalForces && impulseState.Active)
+    if (vars.ExternalForces && impulseState.IsActive())
     {
         const float MAX_RADIUS = 1.0f;
         auto diff = impulseState.Delta;
@@ -384,16 +386,19 @@ void InkBoxSimulation::ComputeFields(float delta_t)
         impulse.Compute();
         fbos.Velocity.Swap();
 
-        force = vec3(0.54, 0.2, 0);
+        if (impulseState.InkActive)
+        {
+            force = vec3(vars.InkColour.x, vars.InkColour.y, vars.InkColour.z);
 
-        impulse.Use();
-        impulse.SetOutput(&fbos.Ink.Back());
-        impulse.Shader().SetVec2("position", impulseState.CurrentPos * rdv);
-        impulse.Shader().SetVec3("force", force);
-        impulse.Shader().SetFloat("radius", vars.InkVolume);
-        impulse.Shader().SetTexture("velocity", fbos.Ink, 0);
-        impulse.Compute();
-        fbos.Ink.Swap();
+            impulse.Use();
+            impulse.SetOutput(&fbos.Ink.Back());
+            impulse.Shader().SetVec2("position", impulseState.CurrentPos * rdv);
+            impulse.Shader().SetVec3("force", force);
+            impulse.Shader().SetFloat("radius", vars.InkVolume);
+            impulse.Shader().SetTexture("velocity", fbos.Ink, 0);
+            impulse.Compute();
+            fbos.Ink.Swap();
+        }
     }
 
     /***************************/
@@ -511,7 +516,8 @@ void InkBoxSimulation::TickDropletsMode()
         impulseState.LastPos = RandPos();
         impulseState.CurrentPos = RandPos();
         impulseState.Delta = impulseState.CurrentPos - impulseState.LastPos;
-        impulseState.Active = true;
+        impulseState.ForceActive = true;
+        impulseState.InkActive = true;
     }
 }
 

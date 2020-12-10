@@ -263,29 +263,33 @@ void ControlPanel::Render()
 ///////////////////////////
 
 ImpulseState::ImpulseState()
-    : Active(false)
+    : ForceActive(false)
+    , InkActive(false)
     , LastPos()
     , CurrentPos()
     , Delta()
 {
 }
 
-void ImpulseState::Update(float x, float y, bool currButtonDown)
+void ImpulseState::Update(float x, float y, bool left_down, bool right_down)
 {
-    if (!Active && currButtonDown)
+    bool down = left_down || right_down;
+
+    if (!IsActive() && down)
     {
         CurrentPos.x = x;
         CurrentPos.y = y;
-        Active = true;
+        ForceActive = true;
+        InkActive = left_down && !right_down;
     }
-    else if (Active && currButtonDown)
+    else if (IsActive() && down)
     {
         auto temp = CurrentPos;
         CurrentPos.x = x;
         CurrentPos.y = y;
         LastPos = temp;
     }
-    else if (Active && !currButtonDown)
+    else if (IsActive() && !down)
     {
         LastPos.x = LastPos.y = 0.f;
         Reset();
@@ -300,7 +304,8 @@ void ImpulseState::Reset()
     Delta = zero;
     CurrentPos = zero;
     LastPos = zero;
-    Active = false;
+    ForceActive = false;
+    InkActive = false;
 }
 
 ///////////////////////////
@@ -392,8 +397,8 @@ SimulationVars::SimulationVars()
     , InkViscosity(0.00001)
     , Vorticity(0.01)
     , SplatRadius(0.005)
-    , AdvectionDissipation(0.97)
-    , InkAdvectionDissipation(0.97)
+    , AdvectionDissipation(1.0)
+    , InkAdvectionDissipation(0.99)
     , InkVolume(0.007)
     , SelfAdvect(true)
     , AdvectInk(true)

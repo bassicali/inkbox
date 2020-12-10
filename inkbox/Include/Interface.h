@@ -35,12 +35,14 @@ struct ImpulseState
 {
 	ImpulseState();
 
-	void Update(float x, float y, bool buttonDown);
+	void Update(float x, float y, bool left_down, bool right_down);
 	void Reset();
+	bool IsActive() const { return InkActive || ForceActive; }
 
 	glm::vec2 LastPos;
 	glm::vec2 CurrentPos;
-	bool Active;
+	bool ForceActive;
+	bool InkActive;
 	glm::vec2 Delta;
 };
 

@@ -19,7 +19,6 @@
     <ClInclude Include="..\thirdparty\imgui\includes\imstb_rectpack.h" />
     <ClInclude Include="..\thirdparty\imgui\includes\imstb_textedit.h" />
     <ClInclude Include="..\thirdparty\imgui\includes\imstb_truetype.h" />
-    <ClInclude Include="..\thirdparty\stb\stb_image.h" />
     <ClInclude Include="Include\FBO.h" />
     <ClInclude Include="Include\Interface.h" />
     <ClInclude Include="Include\Shader.h" />
