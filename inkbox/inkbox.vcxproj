@@ -111,7 +111,7 @@
     <ProjectGuid>{68ace380-7170-4fbf-8fb6-f6bf59dd2bdc}</ProjectGuid>
     <RootNamespace>inkbox</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>ink.box</ProjectName>
+    <ProjectName>inkbox</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">

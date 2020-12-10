@@ -70,7 +70,7 @@ bool InkBoxWindows::InitGLContexts(int width, int height)
         return false;
     }
 
-    Main = glfwCreateWindow(width, height, " i n k . b o x ", nullptr, nullptr);
+    Main = glfwCreateWindow(width, height, " i n k b o x ", nullptr, nullptr);
     if (Main == nullptr)
     {
         cout << "Failed to create GLFW window" << endl;
@@ -78,7 +78,7 @@ bool InkBoxWindows::InitGLContexts(int width, int height)
     }
 
     glfwWindowHint(GLFW_RESIZABLE, 0);
-    Settings = glfwCreateWindow(UI_WIN_W, UI_WIN_H, " i n k . b o x ", nullptr, Main);
+    Settings = glfwCreateWindow(UI_WIN_W, UI_WIN_H, " c o n t r o l s ", nullptr, Main);
     if (Settings == nullptr)
     {
         cout << "Failed to create GLFW window" << endl;
