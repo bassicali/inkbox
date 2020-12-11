@@ -4,6 +4,7 @@
 #include <optional>
 
 #include "Shader.h"
+#include "VertexList.h"
 
 struct GLFWwindow;
 
@@ -16,6 +17,7 @@ public:
 	virtual int Id() = 0;
 	virtual int TextureId() = 0;
 
+	virtual void Resize(int w, int h, GLShaderProgram& shader, VertexList& quad) = 0;
 };
 
 class FBO : public IFBO
@@ -33,7 +35,7 @@ public:
 	virtual int Id() override { return fboId; }
 	virtual int TextureId() override { return textureId; }
 
-	void SetDimensions(int w, int h);
+	virtual void Resize(int w, int h, GLShaderProgram& shader, VertexList& quad) override;
 	int Width() const { return width; }
 	int Height() const { return height; }
 
@@ -43,6 +45,9 @@ private:
 	bool initialized;
 	int width;
 	int height;
+	int format;
+	int type;
+	int internalFormat;
 
 	unsigned int textureId;
 	unsigned int fboId;
@@ -69,6 +74,11 @@ public:
 	virtual void BindTexture(int unitId) override { ptr0->BindTexture(unitId); }
 	virtual int Id() override { return ptr0->Id(); }
 	virtual int TextureId() override { return ptr0->TextureId(); }
+	virtual void Resize(int w, int h, GLShaderProgram& shader, VertexList& quad) override
+	{ 
+		w0.Resize(w, h, shader, quad);
+		w1.Resize(w, h, shader, quad);
+	}
 
 	FBO& Front() const { return *ptr0; }
 	FBO& Back() const { return *ptr1; }

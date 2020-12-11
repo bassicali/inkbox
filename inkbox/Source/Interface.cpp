@@ -5,6 +5,7 @@
 #include <iostream>
 #include <cstdio>
 #include <regex>
+#include <thread>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -17,10 +18,10 @@
 #include "imgui_impl_opengl3.h"
 
 #include "../resource.h"
-#include "Util.h"
+#include "Common.h"
 
 #define UI_WIN_W 745
-#define UI_WIN_H 590
+#define UI_WIN_H 565
 
 using namespace std;
 using namespace glm;
@@ -30,22 +31,9 @@ void GLErrorCallback(int error_code, const char* description)
     LOG_ERROR("GLFW error %08X: %s", error_code, description);
 }
 
-void _BufferResizeCallback(GLFWwindow* window, int width, int height)
-{
-    //if (s_Instance != nullptr)
-    //{
-    //    s_Instance->width = width;
-    //    s_Instance->height = height;
-    //    s_Instance->rdv = vec2(1.0f / width, 1.0f / height);
-    //}
-
-    //_GL_WRAP4(glViewport, 0, 0, width, height);
-    //LOG_INFO("glViewport: %d, %d", width, height);
-}
-
 InkBoxWindows::InkBoxWindows()
     : Main(nullptr)
-    , Settings(nullptr)
+    , Controls(nullptr)
     , ViewportSize(0,0)
 {}
 
@@ -54,8 +42,8 @@ InkBoxWindows::~InkBoxWindows()
     if (Main)
         glfwDestroyWindow(Main);
 
-    if (Settings)
-        glfwDestroyWindow(Settings);
+    if (Controls)
+        glfwDestroyWindow(Controls);
 }
 
 bool InkBoxWindows::InitGLContexts(int width, int height)
@@ -70,7 +58,7 @@ bool InkBoxWindows::InitGLContexts(int width, int height)
         return false;
     }
 
-    Main = glfwCreateWindow(width, height, " i n k b o x ", nullptr, nullptr);
+    Main = glfwCreateWindow(width, height, MAIN_WINDOW_TITLE, nullptr, nullptr);
     if (Main == nullptr)
     {
         cout << "Failed to create GLFW window" << endl;
@@ -78,17 +66,15 @@ bool InkBoxWindows::InitGLContexts(int width, int height)
     }
 
     glfwWindowHint(GLFW_RESIZABLE, 0);
-    Settings = glfwCreateWindow(UI_WIN_W, UI_WIN_H, " c o n t r o l s ", nullptr, Main);
-    if (Settings == nullptr)
+    Controls = glfwCreateWindow(UI_WIN_W, UI_WIN_H, CONTROLS_WINDLW_TITLE, nullptr, Main);
+    if (Controls == nullptr)
     {
         cout << "Failed to create GLFW window" << endl;
         return false;
     }
 
     glfwMakeContextCurrent(Main);
-    glfwSetFramebufferSizeCallback(Main, _BufferResizeCallback);
     glfwSetErrorCallback(GLErrorCallback);
-    glfwSetInputMode(Main, GLFW_STICKY_KEYS, true);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
@@ -103,13 +89,14 @@ bool InkBoxWindows::InitGLContexts(int width, int height)
     SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hico);
     SendMessage(hwnd, WM_SETICON, ICON_BIG, (LPARAM)hico);
 
-    hwnd = glfwGetWin32Window(Settings);
+    hwnd = glfwGetWin32Window(Controls);
     SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hico);
     SendMessage(hwnd, WM_SETICON, ICON_BIG, (LPARAM)hico);
 
     hwnd = GetConsoleWindow();
     SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hico);
     SendMessage(hwnd, WM_SETICON, ICON_BIG, (LPARAM)hico);
+
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -120,7 +107,7 @@ bool InkBoxWindows::InitGLContexts(int width, int height)
     ImGui::StyleColorsDark();
     //ImGui::StyleColorsClassic();
 
-    ImGui_ImplGlfw_InitForOpenGL(Settings, true);
+    ImGui_ImplGlfw_InitForOpenGL(Controls, true);
     ImGui_ImplOpenGL3_Init("#version 330 core");
     ViewportSize = vec2(width, height);
     return true;
@@ -153,6 +140,7 @@ ControlPanel::ControlPanel(GLFWwindow* win, SimulationVars* vars, VarTextBoxes* 
     , ink(ifbo)
     , vorticity(vfbo)
 {
+    glfwSetWindowUserPointer(win, this);
 }
 
 void ControlPanel::Render()
@@ -179,7 +167,6 @@ void ControlPanel::Render()
     ImGui::Checkbox("Vorticity", &simvars->AddVorticity);
     ImGui::Checkbox("Diffusion", &simvars->DiffuseVelocity);
     ImGui::Checkbox("Ink Diffusion", &simvars->DiffuseInk);
-    ImGui::Checkbox("External Forces", &simvars->ExternalForces);
     ImGui::Checkbox("Boundary Conditions", &simvars->BoundariesEnabled);
 
     // ImVec4 and glm::vec4 have the same layout
@@ -198,8 +185,6 @@ void ControlPanel::Render()
     TEXTBOX("Force Radius", texts->SplatRadius);
     TEXTBOX("Ink Volume", texts->InkVolume);
     ImGui::Checkbox("Droplets", &simvars->DropletsMode);
-
-    ImGui::Separator();
     if (ImGui::Button("Update"))
         update = true;
     if (update)
@@ -255,9 +240,6 @@ void ControlPanel::Render()
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-
-
-
 ///////////////////////////
 ///     ImpulseState     ///
 ///////////////////////////
@@ -265,6 +247,7 @@ void ControlPanel::Render()
 ImpulseState::ImpulseState()
     : ForceActive(false)
     , InkActive(false)
+    , Radial(false)
     , LastPos()
     , CurrentPos()
     , Delta()
@@ -306,6 +289,7 @@ void ImpulseState::Reset()
     LastPos = zero;
     ForceActive = false;
     InkActive = false;
+    Radial = false;
 }
 
 ///////////////////////////
@@ -355,28 +339,6 @@ void VarTextBoxes::SetValues(float gridscale, float viscosity, float ink_viscosi
 
 void VarTextBoxes::UpdateVars(SimulationVars& vars)
 {
-    //static regex re_colour("rgb\\((\\d+),(\\d+),(\\d+)\\)", regex_constants::icase | regex_constants::optimize | regex_constants::ECMAScript);
-    //static regex re_colour_hex("#?([a-f0-9]{2})([a-f0-9]{2})([a-f0-9]{2})", regex_constants::icase | regex_constants::optimize | regex_constants::ECMAScript);
-
-    //smatch match;
-    //string str(InkColour);
-    //if (regex_match(str, match, re_colour))
-    //{
-    //    auto r = stof(match[1].str());
-    //    auto g = stof(match[2].str());
-    //    auto b = stof(match[3].str());
-
-    //    vars.InkColour = vec4(r, g, b, 1);
-    //}
-    //else if (regex_match(str, match, re_colour_hex))
-    //{
-    //    float r = stoi(match[1].str(), nullptr, 16);
-    //    float g = stoi(match[2].str(), nullptr, 16);
-    //    float b = stoi(match[3].str(), nullptr, 16);
-
-    //    vars.InkColour = vec4(r, g, b, 1) / 255.0f;
-    //}
-
     vars.Viscosity = stof(Viscosity);
     vars.InkViscosity = stof(InkViscosity);
     vars.Vorticity = stof(Vorticity);
@@ -397,8 +359,8 @@ SimulationVars::SimulationVars()
     , InkViscosity(0.00001)
     , Vorticity(0.01)
     , SplatRadius(0.005)
-    , AdvectionDissipation(1.0)
-    , InkAdvectionDissipation(0.99)
+    , AdvectionDissipation(0.99)
+    , InkAdvectionDissipation(0.98)
     , InkVolume(0.007)
     , SelfAdvect(true)
     , AdvectInk(true)
@@ -406,10 +368,49 @@ SimulationVars::SimulationVars()
     , DiffuseInk(true)
     , PressureEnabled(true)
     , AddVorticity(true)
-    , ExternalForces(true)
     , BoundariesEnabled(true)
     , DropletsMode(false)
     , InkColour(0.54, 0.2, 0.78, 1.0)
     , DisplayField(SimulationField::Ink)
 {
+}
+
+///////////////////////////
+///     FPSLimiter      ///
+///////////////////////////
+
+FPSLimiter::FPSLimiter(int fps)
+    : simFrameTime(1000.0f / fps)
+    , adjustmentCtr(FRAME_DELAY_ADJUSTMENT_MOD)
+    , avgFrameTime(0)
+    , fpsDelay(int(simFrameTime * 0.6))
+{
+}
+
+void FPSLimiter::Regulate()
+{
+    using namespace std::chrono;
+
+    if (fpsDelay != 0)
+        this_thread::sleep_for(milliseconds(fpsDelay));
+
+    if (--adjustmentCtr == 0)
+    {
+        auto now = high_resolution_clock::now();
+
+        if (lastTime.time_since_epoch().count() != 0)
+        {
+            duration<float, milli> time_taken = now - lastTime;
+            avgFrameTime = time_taken.count() / FRAME_DELAY_ADJUSTMENT_MOD;
+
+            float diff = simFrameTime - avgFrameTime;
+            if (diff >= 1.0f)
+                fpsDelay++;
+            else if (diff <= -1.0f)
+                fpsDelay = fpsDelay > 0 ? fpsDelay - 1 : 0;
+        }
+
+        lastTime = now;
+        adjustmentCtr = FRAME_DELAY_ADJUSTMENT_MOD;
+    }
 }

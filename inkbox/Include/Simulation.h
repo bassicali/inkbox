@@ -2,9 +2,11 @@
 #pragma once
 
 #include <vector>
+#include <mutex>
 
 #include <glm/vec2.hpp>
 
+#include "Common.h"
 #include "Shader.h"
 #include "ShaderOp.h"
 #include "FBO.h"
@@ -16,6 +18,7 @@
 struct SimulationFields
 {
 	SimulationFields(int width, int height);
+	void Resize(int w, int h, GLShaderProgram& shader, VertexList& quad);
 	SwapFBO Velocity;
 	FBO Vorticity;
 	SwapFBO Pressure;
@@ -45,9 +48,8 @@ public:
 	
 private:
 
-	static InkBoxSimulation* s_Instance;
-
 	bool CreateShaderOps();
+	void ProcessInputs();
 
 	SimulationFields fbos;
 	SimulationVars vars;
@@ -61,6 +63,7 @@ private:
 	glm::vec2 RandPos();
 
 	QuadShaderOp impulse;
+	QuadShaderOp radialImpulse;
 	QuadShaderOp vorticity;
 	QuadShaderOp addVorticity;
 	QuadShaderOp advection;
@@ -70,15 +73,14 @@ private:
 	QuadShaderOp subtract;
 	BorderShaderOp boundaries;
 
-	void ProcessInput();
-
-	GLFWwindow* mainWindow;
-	GLFWwindow* uiWindow;
+	GLFWwindow* window;
+	FPSLimiter limiter;
 	int width;
 	int height;
 	glm::vec2 rdv;
 	ImpulseState impulseState;
 	VarTextBoxes ui;
+	bool paused;
 
 	VertexList quad;
 	VertexList borderT;
@@ -87,6 +89,7 @@ private:
 	VertexList borderR;
 
 	GLShaderProgram impulseShader;
+	GLShaderProgram radialImpulseShader;
 	GLShaderProgram advectionShader;
 	GLShaderProgram jacobiShader;
 	GLShaderProgram divShader;

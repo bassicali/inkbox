@@ -4,7 +4,7 @@
 
 #include <glad/glad.h>
 
-#include "Util.h"
+#include "Common.h"
 
 using namespace std;
 

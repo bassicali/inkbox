@@ -10,32 +10,17 @@
 #include <glm/vec3.hpp>
 
 #include "Shader.h"
-#include "Util.h"
+#include "Common.h"
 
 using namespace std;
 using namespace glm;
-
-InkBoxSimulation* InkBoxSimulation::s_Instance = nullptr;
-
-SimulationFields::SimulationFields(int width, int height)
-    : Velocity(width, height)
-    , Pressure(width, height)
-    , Vorticity(width, height)
-    , Ink(width, height)
-    , VelocityVis(width, height)
-    , PressureVis(width, height)
-    , InkVis(width, height)
-    , VorticityVis(width, height)
-    , Temp(width, height)
-{
-}
 
 InkBoxSimulation::InkBoxSimulation(const InkBoxWindows& app, int width, int height)
     : width(width)
     , height(height)
     , fbos(width, height)
-    , mainWindow(app.Main)
-    , uiWindow(app.Settings)
+    , window(app.Main)
+    , limiter(60)
     , rdv(1.0f / width, 1.0f / height)
     , advection(width, height, 1.f/width)
     , poissonSolver(width, height, 1.f/width)
@@ -45,12 +30,12 @@ InkBoxSimulation::InkBoxSimulation(const InkBoxWindows& app, int width, int heig
     , vorticity(width, height, 1.f/width)
     , boundaries(width, height, 1.f/width)
     , timestep(0)
+    , paused(false)
 {
-    if (s_Instance == nullptr)
-        s_Instance = this;
-
     ui.SetValues(vars.GridScale, vars.Viscosity, vars.InkViscosity, vars.Vorticity, vars.SplatRadius, vars.AdvectionDissipation, vars.InkAdvectionDissipation, vars.InkVolume);
-    controlPanel = ControlPanel(app.Settings, &vars, &ui, &impulseState, &fbos.VelocityVis, &fbos.PressureVis, &fbos.InkVis, &fbos.VorticityVis);
+    controlPanel = ControlPanel(app.Controls, &vars, &ui, &impulseState, &fbos.VelocityVis, &fbos.PressureVis, &fbos.InkVis, &fbos.VorticityVis);
+
+    glfwSetWindowUserPointer(app.Main, this);
 }
 
 void InkBoxSimulation::Terminate()
@@ -119,88 +104,79 @@ void InkBoxSimulation::WindowLoop()
 {
     double last_time = 0.f;
 
-    while (!glfwWindowShouldClose(mainWindow))
+    while (!glfwWindowShouldClose(window))
     {
-        glfwMakeContextCurrent(mainWindow);
+        glfwMakeContextCurrent(window);
         double now = glfwGetTime();
         timestep = last_time == 0 ? 0.016667 : now - last_time;
         last_time = now;
 
         glfwPollEvents();
-        ProcessInput();
+        ProcessInputs();
 
-        if (vars.DropletsMode)
-            TickDropletsMode();
+        if (!paused)
+        {
 
-        // Update velocity, pressure, and ink fields
-        ComputeFields(timestep);
+            if (vars.DropletsMode)
+                TickDropletsMode();
 
-        // Create visualizations for each one
+            // Update velocity, pressure, and ink fields
+            ComputeFields(timestep);
 
-        fbos.VelocityVis.Bind();
-        vectorVisShader.Use();
-        vectorVisShader.SetVec4("bias", vec4(0.5, 0.5, 0.5, 0.5));
-        vectorVisShader.SetVec4("scale", vec4(0.5, 0.5, 0.5, 0.5));
-        vectorVisShader.SetTexture("field", fbos.Velocity, 0);
-        DrawQuad();
+            // Create visualizations for each one
 
-        fbos.InkVis.Bind();
-        inkVisShader.Use();
-        vec4 bias(0, 0, vars.InkColour.z, 0);
-        inkVisShader.SetVec4("bias", bias);
-        inkVisShader.SetVec4("scale", vec4(1, 1, 1, 1));
-        inkVisShader.SetTexture("field", fbos.Ink, 0);
-        DrawQuad();
+            fbos.VelocityVis.Bind();
+            vectorVisShader.Use();
+            vectorVisShader.SetVec4("bias", vec4(0.5, 0.5, 0.5, 0.5));
+            vectorVisShader.SetVec4("scale", vec4(0.5, 0.5, 0.5, 0.5));
+            vectorVisShader.SetTexture("field", fbos.Velocity, 0);
+            DrawQuad();
 
-        fbos.PressureVis.Bind();
-        scalarVisShader.Use();
-        scalarVisShader.SetVec4("bias", vec4(0, 0, 0, 0));
-        scalarVisShader.SetVec4("scale", vec4(2, -1, -2, 1));
-        scalarVisShader.SetTexture("field", fbos.Pressure, 0);
-        fbos.Pressure.BindTexture(0);
-        DrawQuad();
+            fbos.InkVis.Bind();
+            inkVisShader.Use();
+            vec4 bias(0, 0, vars.InkColour.z, 0);
+            inkVisShader.SetVec4("bias", bias);
+            inkVisShader.SetVec4("scale", vec4(1, 1, 1, 1));
+            inkVisShader.SetTexture("field", fbos.Ink, 0);
+            DrawQuad();
 
-        fbos.VorticityVis.Bind();
-        scalarVisShader.SetVec4("scale", vec4(1, 1, -1, -1));
-        scalarVisShader.SetTexture("field", fbos.Vorticity, 0);
-        DrawQuad();
+            fbos.PressureVis.Bind();
+            scalarVisShader.Use();
+            scalarVisShader.SetVec4("bias", vec4(0, 0, 0, 0));
+            scalarVisShader.SetVec4("scale", vec4(2, -1, -2, 1));
+            scalarVisShader.SetTexture("field", fbos.Pressure, 0);
+            fbos.Pressure.BindTexture(0);
+            DrawQuad();
 
-        _GL_WRAP2(glBindFramebuffer, GL_FRAMEBUFFER, 0);
-        copyShader.Use();
-        copyShader.SetInt("field", 0);
+            fbos.VorticityVis.Bind();
+            scalarVisShader.SetVec4("scale", vec4(1, 1, -1, -1));
+            scalarVisShader.SetTexture("field", fbos.Vorticity, 0);
+            DrawQuad();
 
-        if (vars.DisplayField == SimulationField::Velocity)
-            fbos.VelocityVis.BindTexture(0);
-        else if (vars.DisplayField == SimulationField::Ink)
-            fbos.InkVis.BindTexture(0);
-        else if (vars.DisplayField == SimulationField::Vorticity)
-            fbos.VorticityVis.BindTexture(0);
-        else
-            fbos.PressureVis.BindTexture(0);
+            _GL_WRAP2(glBindFramebuffer, GL_FRAMEBUFFER, 0);
+            copyShader.Use();
+            copyShader.SetInt("field", 0);
 
-        DrawQuad();
-        glfwSwapBuffers(mainWindow);
+            if (vars.DisplayField == SimulationField::Velocity)
+                fbos.VelocityVis.BindTexture(0);
+            else if (vars.DisplayField == SimulationField::Ink)
+                fbos.InkVis.BindTexture(0);
+            else if (vars.DisplayField == SimulationField::Vorticity)
+                fbos.VorticityVis.BindTexture(0);
+            else
+                fbos.PressureVis.BindTexture(0);
 
-        // Render ImGUI
+            DrawQuad();
+            glfwSwapBuffers(window);
+        }
+        
+        limiter.Regulate();
+
+        // Render control panel window
         glfwMakeContextCurrent(controlPanel.WindowPtr());
         controlPanel.Render();
-
-        glfwSwapBuffers(uiWindow);
+        glfwSwapBuffers(controlPanel.WindowPtr());
     }
-}
-
-void InkBoxSimulation::ProcessInput()
-{
-    if (glfwGetKey(mainWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-    {
-        glfwSetWindowShouldClose(mainWindow, true);
-    }
-
-    double x = 0, y = 0;
-    glfwGetCursorPos(mainWindow, &x, &y);
-    impulseState.Update(x, height - y, 
-        glfwGetMouseButton(mainWindow, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS, 
-        glfwGetMouseButton(mainWindow, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS);
 }
 
 void InkBoxSimulation::SetDimensions(int w, int h)
@@ -233,9 +209,9 @@ bool InkBoxSimulation::CreateShaderOps()
     GLShader vs("tex_coords.v.glsl", ShaderType::Vertex);
     if (!vs.Compile())
         return false;
-    
 
     ADD_SHADER(impulseShader,       "add_impulse.f.glsl")
+    ADD_SHADER(radialImpulseShader, "add_radial_impulse.f.glsl")
     ADD_SHADER(advectionShader,     "advection.f.glsl")
     ADD_SHADER(jacobiShader,        "jacobi.f.glsl")
     ADD_SHADER(divShader,           "divergence.f.glsl")
@@ -254,6 +230,13 @@ bool InkBoxSimulation::CreateShaderOps()
     impulse.SetShader(&impulseShader);
     impulse.SetQuad(&quad);
     impulse.SetUniformsFunc([&](GLShaderProgram& sh) -> void {
+        sh.SetFloat("delta_t", timestep);
+    });
+
+    
+    radialImpulse.SetShader(&radialImpulseShader);
+    radialImpulse.SetQuad(&quad);
+    radialImpulse.SetUniformsFunc([&](GLShaderProgram& sh) -> void {
         sh.SetFloat("delta_t", timestep);
     });
 
@@ -291,8 +274,6 @@ bool InkBoxSimulation::CreateShaderOps()
     poissonSolver.SetUniformsFunc([&](GLShaderProgram& sh) -> void {
         vec2 rdv2 = -rdv * rdv;
         sh.SetVec2("rdv", rdv);
-        //sh.SetVec2("alpha", rdv2);
-        //sh.SetVec2("beta", vec2(4.0, 4.0));
     });
 
     gradient.SetShader(&gradShader);
@@ -327,9 +308,50 @@ bool InkBoxSimulation::CreateShaderOps()
 #undef ADD_SHADER
 }
 
+void InkBoxSimulation::ProcessInputs()
+{
+    static int pkey = 0;
+    if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
+    {
+        pkey = 1;
+    }
+    else if (pkey == 1 && glfwGetKey(window, GLFW_KEY_P) == GLFW_RELEASE)
+    {
+        pkey = 0;
+        paused = !paused;
+
+        if (paused)
+            glfwSetWindowTitle(window, MAIN_WINDOW_TITLE "(PAUSED)");
+        else
+            glfwSetWindowTitle(window, MAIN_WINDOW_TITLE);
+    }
+
+    double x = 0, y = 0;
+    glfwGetCursorPos(window, &x, &y);
+    impulseState.Update(x, height - y, glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS, glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS);
+
+    int w = 0, h = 0;
+    int ww = 0, wh = 0;
+    glfwGetFramebufferSize(window, &w, &h);
+    glfwGetWindowSize(window, &ww, &wh);
+    if (w != width || height != h)
+    {
+        // For now enforce a square viewport
+        width = h;
+        height = h;
+
+        if (wh != ww)
+            glfwSetWindowSize(window, wh, wh);
+
+        rdv = vec2(1.0f / width, 1.0f / height);
+        fbos.Resize(width, height, copyShader, quad);
+        LOG_INFO("Resized to %dx%d", width, height);
+    }
+}
+
 void InkBoxSimulation::ComputeFields(float delta_t)
 {
-    if (!vars.SelfAdvect && !vars.AdvectInk && !vars.DiffuseVelocity && !vars.AddVorticity && !vars.ExternalForces)
+    if (!vars.SelfAdvect && !vars.AdvectInk && !vars.DiffuseVelocity && !vars.AddVorticity)
         return;
 
     // convention: front buffer has the correct field data after each operation is finished
@@ -343,7 +365,7 @@ void InkBoxSimulation::ComputeFields(float delta_t)
 
         advection.Use();
         advection.SetOutput(&fbos.Velocity.Back());
-        advection.Shader().SetFloat("dissipation", vars.InkAdvectionDissipation);
+        advection.Shader().SetFloat("dissipation", vars.AdvectionDissipation);
         advection.Shader().SetTexture("quantity", fbos.Velocity, 1);
         advection.Compute();
         fbos.Velocity.Swap();
@@ -367,7 +389,7 @@ void InkBoxSimulation::ComputeFields(float delta_t)
     /**********************************/
     /******* FORCE APPLICATION ********/
     /**********************************/
-    if (vars.ExternalForces && impulseState.IsActive())
+    if (impulseState.IsActive())
     {
         const float MAX_RADIUS = 1.0f;
         auto diff = impulseState.Delta;
@@ -377,23 +399,29 @@ void InkBoxSimulation::ComputeFields(float delta_t)
                     min(max(diff.y, -vars.GridScale), vars.GridScale),
                     0);
 
-        impulse.Use();
-        impulse.SetOutput(&fbos.Velocity.Back());
-        impulse.Shader().SetVec2("position", impulseState.CurrentPos * rdv);
-        impulse.Shader().SetVec3("force", force);
-        impulse.Shader().SetFloat("radius", vars.SplatRadius);
-        impulse.Shader().SetTexture("velocity", fbos.Velocity, 0);
-        impulse.Compute();
+        QuadShaderOp* op = &impulse;
+        if (impulseState.Radial)
+            op = &radialImpulse;
+
+        op->Use();
+        op->SetOutput(&fbos.Velocity.Back());
+        op->Shader().SetVec2("position", impulseState.CurrentPos * rdv);
+        op->Shader().SetFloat("radius", vars.SplatRadius);
+        op->Shader().SetTexture("velocity", fbos.Velocity, 0);
+
+        if (!impulseState.Radial)
+            op->Shader().SetVec3("force", force);
+
+        op->Compute();
         fbos.Velocity.Swap();
 
         if (impulseState.InkActive)
         {
-            force = vec3(vars.InkColour.x, vars.InkColour.y, vars.InkColour.z);
-
+            vec3 colour(vars.InkColour.x, vars.InkColour.y, vars.InkColour.z);
             impulse.Use();
             impulse.SetOutput(&fbos.Ink.Back());
             impulse.Shader().SetVec2("position", impulseState.CurrentPos * rdv);
-            impulse.Shader().SetVec3("force", force);
+            impulse.Shader().SetVec3("force", colour);
             impulse.Shader().SetFloat("radius", vars.InkVolume);
             impulse.Shader().SetTexture("velocity", fbos.Ink, 0);
             impulse.Compute();
@@ -518,6 +546,13 @@ void InkBoxSimulation::TickDropletsMode()
         impulseState.Delta = impulseState.CurrentPos - impulseState.LastPos;
         impulseState.ForceActive = true;
         impulseState.InkActive = true;
+        impulseState.Radial = true;
+    }
+    else
+    {
+        impulseState.ForceActive = false;
+        impulseState.InkActive = false;
+        impulseState.Radial = false;
     }
 }
 
@@ -528,4 +563,34 @@ void InkBoxSimulation::CopyFBO(FBO& dest, FBO& src)
     copyShader.SetInt("field", 0);
     src.BindTexture(0);
     DrawQuad();
+}
+
+///////////////////////////////
+///     SimulationFields    ///
+///////////////////////////////
+
+SimulationFields::SimulationFields(int width, int height)
+    : Velocity(width, height)
+    , Pressure(width, height)
+    , Vorticity(width, height)
+    , Ink(width, height)
+    , VelocityVis(width, height)
+    , PressureVis(width, height)
+    , InkVis(width, height)
+    , VorticityVis(width, height)
+    , Temp(width, height)
+{
+}
+
+void SimulationFields::Resize(int w, int h, GLShaderProgram& shader, VertexList& quad)
+{
+    Velocity.Resize(w, h, shader, quad);
+    Pressure.Resize(w, h, shader, quad);
+    Vorticity.Resize(w, h, shader, quad);
+    Ink.Resize(w, h, shader, quad);
+    VelocityVis.Resize(w, h, shader, quad);
+    PressureVis.Resize(w, h, shader, quad);
+    InkVis.Resize(w, h, shader, quad);
+    VorticityVis.Resize(w, h, shader, quad);
+    Temp.Resize(w, h, shader, quad);
 }

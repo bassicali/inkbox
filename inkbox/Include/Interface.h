@@ -1,12 +1,17 @@
 
 #pragma once
 
+#include <chrono>
+
 #include <glm/vec2.hpp>
 
 #include "FBO.h"
 
 #define TEXTBOX_LEN 16
 #define TEXTBUFF_LEN (TEXTBOX_LEN * sizeof(char))
+#define MAIN_WINDOW_TITLE " i n k b o x "
+#define CONTROLS_WINDLW_TITLE " c o n t r o l s "
+#define FRAME_DELAY_ADJUSTMENT_MOD 4
 
 struct GLFWwindow;
 
@@ -18,7 +23,7 @@ struct InkBoxWindows
 	bool InitGLContexts(int width, int height);
 
 	GLFWwindow* Main;
-	GLFWwindow* Settings;
+	GLFWwindow* Controls;
 
 	glm::vec2 ViewportSize;
 };
@@ -43,6 +48,7 @@ struct ImpulseState
 	glm::vec2 CurrentPos;
 	bool ForceActive;
 	bool InkActive;
+	bool Radial;
 	glm::vec2 Delta;
 };
 
@@ -54,7 +60,6 @@ struct SimulationVars
 	bool AdvectInk;
 	bool DiffuseVelocity;
 	bool DiffuseInk;
-	bool ExternalForces;
 	bool PressureEnabled;
 	bool AddVorticity;
 	bool BoundariesEnabled;
@@ -86,7 +91,6 @@ struct VarTextBoxes
 	char InkVolume[TEXTBOX_LEN];
 };
 
-
 class ControlPanel
 {
 public:
@@ -104,4 +108,18 @@ private:
 	FBO* vorticity;
 	FBO* pressure;
 	FBO* ink;
+};
+
+class FPSLimiter
+{
+public:
+	FPSLimiter(int fps);
+	void Regulate();
+
+private:
+	float simFrameTime;
+	float avgFrameTime;
+	int fpsDelay;
+	int adjustmentCtr;
+	std::chrono::steady_clock::time_point lastTime;
 };

@@ -33,9 +33,6 @@
     <ClInclude Include="Include\FBO.h">
       <Filter>Include</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Util.h">
-      <Filter>Include</Filter>
-    </ClInclude>
     <ClInclude Include="..\thirdparty\imgui\includes\imconfig.h">
       <Filter>ThirdParty\Include</Filter>
     </ClInclude>
@@ -70,6 +67,9 @@
       <Filter>Include</Filter>
     </ClInclude>
     <ClInclude Include="resource.h" />
+    <ClInclude Include="Include\Common.h">
+      <Filter>Include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Main.cpp">
@@ -79,9 +79,6 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="Source\Simulation.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Util.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="..\thirdparty\opengl\glad.c">
@@ -115,6 +112,9 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="Source\FBO.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Common.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
@@ -164,10 +164,10 @@
     <CopyFileToFolders Include="Resources\imgui.ini">
       <Filter>Resources</Filter>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="Resources\swirl.png">
-      <Filter>Resources</Filter>
-    </CopyFileToFolders>
     <CopyFileToFolders Include="Shaders\ink_vis.f.glsl">
+      <Filter>Shaders</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\add_radial_impulse.f.glsl">
       <Filter>Shaders</Filter>
     </CopyFileToFolders>
   </ItemGroup>

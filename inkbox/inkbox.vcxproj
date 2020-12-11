@@ -24,7 +24,7 @@
     <ClInclude Include="Include\Shader.h" />
     <ClInclude Include="Include\ShaderOp.h" />
     <ClInclude Include="Include\Simulation.h" />
-    <ClInclude Include="Include\Util.h" />
+    <ClInclude Include="Include\Common.h" />
     <ClInclude Include="Include\VertexList.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
@@ -42,7 +42,7 @@
     <ClCompile Include="Source\Shader.cpp" />
     <ClCompile Include="Source\ShaderOp.cpp" />
     <ClCompile Include="Source\Simulation.cpp" />
-    <ClCompile Include="Source\Util.cpp" />
+    <ClCompile Include="Source\Common.cpp" />
     <ClCompile Include="Source\VertexList.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -97,10 +97,14 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="Resources\swirl.ico" />
-    <CopyFileToFolders Include="Resources\swirl.png" />
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="Shaders\ink_vis.f.glsl">
+      <FileType>Document</FileType>
+    </CopyFileToFolders>
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="Shaders\add_radial_impulse.f.glsl">
       <FileType>Document</FileType>
     </CopyFileToFolders>
   </ItemGroup>

@@ -11,7 +11,7 @@
 #include <glad/glad.h>
 
 #include "FBO.h"
-#include "Util.h"
+#include "Common.h"
 
 using namespace std;
 
@@ -57,32 +57,44 @@ void GLShaderProgram::Use()
 
 void GLShaderProgram::SetInt(std::string name, int value)
 {
-	_GL_WRAP2(glUniform1i, GetUniformLoc(name), value);
+	int loc;
+	if ((loc = GetUniformLoc(name)) != -1)
+		_GL_WRAP2(glUniform1i, loc, value);
 }
 
 void GLShaderProgram::SetFloat(std::string name, float value)
 {
-	_GL_WRAP2(glUniform1f, GetUniformLoc(name), value);
+	int loc;
+	if ((loc = GetUniformLoc(name)) != -1)
+		_GL_WRAP2(glUniform1f, loc, value);
 }
 
 void GLShaderProgram::SetVec2(string name, glm::vec2 value)
 {
-	_GL_WRAP3(glUniform2fv, GetUniformLoc(name), 1, &value[0]);
+	int loc;
+	if ((loc = GetUniformLoc(name)) != -1)
+		_GL_WRAP3(glUniform2fv, loc, 1, &value[0]);
 }
 
 void GLShaderProgram::SetVec3(std::string name, glm::vec3 value)
 {
-	_GL_WRAP3(glUniform3fv, GetUniformLoc(name), 1, &value[0]);
+	int loc;
+	if ((loc = GetUniformLoc(name)) != -1)
+		_GL_WRAP3(glUniform3fv, loc, 1, &value[0]);
 }
 
 void GLShaderProgram::SetVec2(std::string name, float x, float y)
 {
-	_GL_WRAP3(glUniform2f, GetUniformLoc(name), x, y);
+	int loc;
+	if ((loc = GetUniformLoc(name)) != -1)
+		_GL_WRAP3(glUniform2f, loc, x, y);
 }
 
 void GLShaderProgram::SetVec4(std::string name, glm::vec4 value)
 {
-	_GL_WRAP3(glUniform4fv, GetUniformLoc(name), 1, &value[0]);
+	int loc;
+	if ((loc = GetUniformLoc(name)) != -1)
+		_GL_WRAP3(glUniform4fv, loc, 1, &value[0]);
 }
 
 void GLShaderProgram::SetTexture(std::string name, IFBO& fbo, int value)

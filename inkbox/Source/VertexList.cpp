@@ -1,7 +1,7 @@
 
 #include <glad/glad.h>
 
-#include "Util.h"
+#include "Common.h"
 #include "VertexList.h"
 
 ///////////////////////////

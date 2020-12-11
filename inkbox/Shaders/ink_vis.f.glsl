@@ -11,8 +11,8 @@ out vec4 FragColor;
 void main()
 {
     vec4 tx = texture2D(field, coord);
-    float x = sqrt(dot(tx.xy, tx.xy));
+    float x = (tx.x + tx.y) / 2;
 
-    vec4 vis = (x * bias) + scale * tx;
+    vec4 vis = (tx.x * bias) + scale * tx;
     FragColor = vis;
 }

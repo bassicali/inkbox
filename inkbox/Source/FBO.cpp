@@ -3,7 +3,7 @@
 #include <GLFW/glfw3.h>
 
 #include "FBO.h"
-#include "Util.h"
+#include "Common.h"
 
 using namespace std;
 using namespace glm;
@@ -21,16 +21,22 @@ FBO::FBO()
 FBO::FBO(int width, int height, std::optional<glm::vec4> fill)
 	: width(width)
 	, height(height)
+	, format(GL_RGBA)
+	, type(GL_FLOAT)
+	, internalFormat(GL_RGB16_SNORM)
 	, textureId(0)
 	, fboId(0)
 {
-	if (!Init(GL_RGBA, GL_FLOAT, GL_RGB16_SNORM, fill))
+	if (!Init(format, type, internalFormat, fill))
 		throw exception("Failed to intialize FBO");
 }
 
 FBO::FBO(int width, int height, int format, int type, int internalformat, optional<vec4> fill)
 	: width(width)
 	, height(height)
+	, format(format)
+	, type(type)
+	, internalFormat(internalformat)
 	, textureId(0)
 	, fboId(0)
 {
@@ -64,7 +70,7 @@ bool FBO::Init(int format, int type, int internalformat, optional<vec4> fill)
 	}
 	else
 	{
-		_GL_WRAP4(glClearColor, 0.5, 0.5, 0.5, 0.5);
+		_GL_WRAP4(glClearColor, 0, 0, 0, 0);
 	}
 	_GL_WRAP1(glClear, GL_COLOR_BUFFER_BIT);
 
@@ -109,8 +115,25 @@ void FBO::BindTexture(int unitId)
 	_GL_WRAP2(glBindTexture, GL_TEXTURE_2D, textureId);
 }
 
-void FBO::SetDimensions(int w, int h)
+void FBO::Resize(int w, int h, GLShaderProgram& shader, VertexList& quad)
 {
 	width = w;
 	height = h;
+
+	int tex_id = textureId;
+	int fbo_id = fboId;
+
+	textureId = 0;
+	fboId = 0;
+
+	if (!Init(format, type, internalFormat))
+		throw exception("Failed to resize FBO");
+
+	Bind();
+	shader.Use();
+	shader.SetInt("field", 0);
+	_GL_WRAP1(glActiveTexture, GL_TEXTURE0);
+	_GL_WRAP2(glBindTexture, GL_TEXTURE_2D, tex_id);
+	_GL_WRAP1(glBindVertexArray, quad.VAO);
+	_GL_WRAP4(glDrawElements, GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 }

@@ -19,7 +19,7 @@ void main()
 {
     vec2 u1 = texture2D(velocity, coord).xy;
     vec2 pos0 = coord - delta_t * gs * u1;
-    vec2 u0 = dissipation * bilerp(quantity, pos0, rdv).xy;
+    vec3 u0 = dissipation * bilerp(quantity, pos0, rdv).xyz;
 
-    FragColor = vec4(u0, 0.0, 1.0);
+    FragColor = vec4(u0, 1.0);
 }
