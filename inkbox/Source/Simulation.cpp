@@ -133,11 +133,10 @@ void InkBoxSimulation::WindowLoop()
             DrawQuad();
 
             fbos.InkVis.Bind();
-            inkVisShader.Use();
-            vec4 bias(0, 0, vars.InkColour.z, 0);
-            inkVisShader.SetVec4("bias", bias);
-            inkVisShader.SetVec4("scale", vec4(1, 1, 1, 1));
-            inkVisShader.SetTexture("field", fbos.Ink, 0);
+            vectorVisShader.Use();
+            vectorVisShader.SetVec4("bias", vec4(0, 0, 0, 0));
+            vectorVisShader.SetVec4("scale", vec4(1, 1, 1, 1));
+            vectorVisShader.SetTexture("field", fbos.Ink, 0);
             DrawQuad();
 
             fbos.PressureVis.Bind();
@@ -170,11 +169,27 @@ void InkBoxSimulation::WindowLoop()
             glfwSwapBuffers(window);
         }
         
+        // Sleep for a little bit if needed
         limiter.Regulate();
 
         // Render control panel window
+
+        bool update, clear;
         glfwMakeContextCurrent(controlPanel.WindowPtr());
-        controlPanel.Render();
+
+        controlPanel.Render(update, clear);
+
+        if (update)
+            ui.UpdateVars(vars);
+
+        if (clear)
+        {
+            fbos.Velocity.Clear();
+            fbos.Vorticity.Clear();
+            fbos.Pressure.Clear();
+            fbos.Ink.Clear();
+        }
+
         glfwSwapBuffers(controlPanel.WindowPtr());
     }
 }
@@ -222,7 +237,6 @@ bool InkBoxSimulation::CreateShaderOps()
     ADD_SHADER(addVorticityShader,  "add_vorticity.f.glsl")
     ADD_SHADER(vectorVisShader,     "vector_vis.f.glsl")
     ADD_SHADER(scalarVisShader,     "scalar_vis.f.glsl")
-    ADD_SHADER(inkVisShader,        "ink_vis.f.glsl")
     ADD_SHADER(copyShader,          "copy.f.glsl")
 
     vec2 dimensions(width, height);

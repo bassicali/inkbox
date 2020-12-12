@@ -96,7 +96,7 @@ class ControlPanel
 public:
 	ControlPanel();
 	ControlPanel(GLFWwindow* win, SimulationVars* vars, VarTextBoxes* texts, ImpulseState* impulse, FBO* ufbo, FBO* pfbo, FBO* ifbo, FBO* vfbo);
-	void Render();
+	void Render(bool& update_vars, bool& clear_buffers);
 	GLFWwindow* WindowPtr() const { return window; }
 
 private:

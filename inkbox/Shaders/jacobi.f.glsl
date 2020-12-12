@@ -18,13 +18,13 @@ out vec4 FragColor;
 
 void main()
 {
-    vec2 xL = texture2D(x, pxL).xy;
-    vec2 xR = texture2D(x, pxR).xy;
-    vec2 xB = texture2D(x, pxB).xy;
-    vec2 xT = texture2D(x, pxT).xy;
-    vec2 bC = texture2D(b, coord).xy;
+    vec3 xL = texture2D(x, pxL).xyz;
+    vec3 xR = texture2D(x, pxR).xyz;
+    vec3 xB = texture2D(x, pxB).xyz;
+    vec3 xT = texture2D(x, pxT).xyz;
+    vec3 bC = texture2D(b, coord).xyz;
 
-    vec2 result = (xL + xR + xB + xT + (alpha * bC)) / beta;
+    vec3 result = (xL + xR + xB + xT + (alpha * bC)) / beta;
 
-    FragColor = vec4(result, 0.0, 1.0);
+    FragColor = vec4(result, 1.0);
 }

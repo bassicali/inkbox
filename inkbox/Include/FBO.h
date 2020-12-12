@@ -18,6 +18,7 @@ public:
 	virtual int TextureId() = 0;
 
 	virtual void Resize(int w, int h, GLShaderProgram& shader, VertexList& quad) = 0;
+	virtual void Clear(float r = 0.f, float g = 0.f, float b = 0.f, float a = 0.0f) = 0;
 };
 
 class FBO : public IFBO
@@ -28,7 +29,7 @@ public:
 	FBO(int width, int height, int format, int type, int internalformat = 0, std::optional<glm::vec4> fill = std::optional<glm::vec4>());
 	~FBO();
 	bool Init(int format, int type, int internalformat = 0, std::optional<glm::vec4> fill = std::optional<glm::vec4>());
-	void Clear(float r = 0.f, float g = 0.f, float b = 0.f, float a = 0.0f);
+	virtual void Clear(float r = 0.f, float g = 0.f, float b = 0.f, float a = 0.0f) override;
 	virtual void Bind() override;
 	virtual void BindTexture(int unitId) override;
 
@@ -78,6 +79,11 @@ public:
 	{ 
 		w0.Resize(w, h, shader, quad);
 		w1.Resize(w, h, shader, quad);
+	}
+	virtual void Clear(float r = 0.f, float g = 0.f, float b = 0.f, float a = 0.0f) override
+	{
+		w0.Clear(r, g, b, a);
+		w1.Clear(r, g, b, a);
 	}
 
 	FBO& Front() const { return *ptr0; }

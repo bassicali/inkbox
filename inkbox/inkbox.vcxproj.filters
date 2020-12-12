@@ -164,9 +164,6 @@
     <CopyFileToFolders Include="Resources\imgui.ini">
       <Filter>Resources</Filter>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\ink_vis.f.glsl">
-      <Filter>Shaders</Filter>
-    </CopyFileToFolders>
     <CopyFileToFolders Include="Shaders\add_radial_impulse.f.glsl">
       <Filter>Shaders</Filter>
     </CopyFileToFolders>

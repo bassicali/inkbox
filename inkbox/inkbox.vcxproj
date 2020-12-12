@@ -99,11 +99,6 @@
     <Image Include="Resources\swirl.ico" />
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="Shaders\ink_vis.f.glsl">
-      <FileType>Document</FileType>
-    </CopyFileToFolders>
-  </ItemGroup>
-  <ItemGroup>
     <CopyFileToFolders Include="Shaders\add_radial_impulse.f.glsl">
       <FileType>Document</FileType>
     </CopyFileToFolders>

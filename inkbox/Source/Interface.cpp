@@ -20,8 +20,8 @@
 #include "../resource.h"
 #include "Common.h"
 
-#define UI_WIN_W 745
-#define UI_WIN_H 565
+#define UI_WIN_W 750
+#define UI_WIN_H 395
 
 using namespace std;
 using namespace glm;
@@ -143,7 +143,7 @@ ControlPanel::ControlPanel(GLFWwindow* win, SimulationVars* vars, VarTextBoxes* 
     glfwSetWindowUserPointer(win, this);
 }
 
-void ControlPanel::Render()
+void ControlPanel::Render(bool& update_vars, bool& clear_buffers)
 {
 #define TEXTBOX(text,var) ImGui::SetNextItemWidth(80); ImGui::InputText((text), (var), 16);
 
@@ -151,9 +151,10 @@ void ControlPanel::Render()
     static ImVec2 uv_max = ImVec2(1.0f, 0.0f);                 // Lower-right
     static ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
     static ImVec4 border_col = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
-    //static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-    static ImVec4 clear_color = ImVec4(0.59f, 0.49f, 0.78f, 1.00f);
-    static bool update = 0;
+    static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
+    update_vars = false;
+    clear_buffers = false;
 
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -161,40 +162,53 @@ void ControlPanel::Render()
 
     ImGui::Begin("Settings");
 
-    ImGui::Text("Constants");
+    ImGui::Text("Equation Steps");
     ImGui::Checkbox("Self Advection", &simvars->SelfAdvect);
+    ImGui::SameLine(200);
     ImGui::Checkbox("Ink Advection", &simvars->AdvectInk);
-    ImGui::Checkbox("Vorticity", &simvars->AddVorticity);
+
     ImGui::Checkbox("Diffusion", &simvars->DiffuseVelocity);
+    ImGui::SameLine(200);
     ImGui::Checkbox("Ink Diffusion", &simvars->DiffuseInk);
+
+    ImGui::Checkbox("Vorticity", &simvars->AddVorticity);
+    ImGui::SameLine(200);
     ImGui::Checkbox("Boundary Conditions", &simvars->BoundariesEnabled);
 
+    ImGui::Separator();
+    ImGui::Text("Variables");
+    TEXTBOX("Grid Scale", texts->GridScale);
+    ImGui::SameLine(200);
+    TEXTBOX("Vorticity##3", texts->Vorticity);
+
+    TEXTBOX("Viscosity", texts->Viscosity);
+    ImGui::SameLine(200);
+    TEXTBOX("Ink Viscosity", texts->InkViscosity);
+
+    TEXTBOX("Dissipation", texts->AdvDissipation);
+    ImGui::SameLine(200);
+    TEXTBOX("Ink Dissipation", texts->InkAdvDissipation);
+    
+    TEXTBOX("Force Radius", texts->SplatRadius);
+    ImGui::SameLine(200);
+    TEXTBOX("Ink Volume", texts->InkVolume);
+    
     // ImVec4 and glm::vec4 have the same layout
     ImGui::ColorEdit4("Ink Colour", (float*)&simvars->InkColour, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
     ImGui::SameLine();
     ImGui::Text("Ink Colour");
 
-    ImGui::Separator();
-    ImGui::Text("Variables");
-    TEXTBOX("Grid Scale", texts->GridScale);
-    TEXTBOX("Viscosity", texts->Viscosity);
-    TEXTBOX("Ink Viscosity", texts->InkViscosity);
-    TEXTBOX("Vorticity##3", texts->Vorticity);
-    TEXTBOX("Adv. Dissipation", texts->AdvDissipation);
-    TEXTBOX("Ink Dissipation", texts->InkAdvDissipation);
-    TEXTBOX("Force Radius", texts->SplatRadius);
-    TEXTBOX("Ink Volume", texts->InkVolume);
+    ImGui::SameLine(200);
     ImGui::Checkbox("Droplets", &simvars->DropletsMode);
     if (ImGui::Button("Update"))
-        update = true;
-    if (update)
-    {
-        texts->UpdateVars(*simvars);
-        update = false;
-    }
+        update_vars = true; 
+
+    ImGui::SameLine();
+    if (ImGui::Button("Clear"))
+        clear_buffers = true;
 
     ImGui::Separator();
-    ImGui::Text("Display Field");
+    ImGui::Text("Viewport");
     int* radio_field = (int*)(&simvars->DisplayField);
     ImGui::RadioButton("Ink", radio_field, 0);
     ImGui::SameLine();
