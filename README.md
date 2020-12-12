@@ -9,8 +9,11 @@ This is an implementation of the fluid simulation system described in "Fast Flui
 - "Droplets" mode
 
 ## Usage
-Click and drag to add ink and force. Use right-click to only add force.
+- Click and drag to add ink and force
+- Use right-click and drag to only add force
+- Hit 'p' key to toggle pause
 
+## Screens
 <img width="50%" height="50%" src="images/screen2.png">
 <img src="images/screen1.png">
 
