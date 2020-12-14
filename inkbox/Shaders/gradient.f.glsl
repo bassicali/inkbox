@@ -3,7 +3,6 @@
 precision highp float;
 
 uniform sampler2D field;
-uniform vec2 rdv;
 uniform float gs;
 
 varying vec2 coord;

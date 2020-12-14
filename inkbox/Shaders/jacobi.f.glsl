@@ -4,7 +4,6 @@ precision highp float;
 
 uniform float beta;
 uniform float alpha;
-uniform vec2 rdv;
 uniform sampler2D x;
 uniform sampler2D b;
 

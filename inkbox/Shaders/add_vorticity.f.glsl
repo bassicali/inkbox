@@ -6,7 +6,6 @@ uniform sampler2D velocity;
 uniform sampler2D vorticity;
 uniform float scale;
 uniform float delta_t;
-uniform vec2 rdv;
 uniform float gs;
 
 varying vec2 coord;

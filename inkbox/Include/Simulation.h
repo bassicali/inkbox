@@ -18,6 +18,7 @@
 struct SimulationFields
 {
 	SimulationFields(int width, int height);
+	FBO& Get(SimulationField field);
 	void Resize(int w, int h, GLShaderProgram& shader, VertexList& quad);
 	SwapFBO Velocity;
 	FBO Vorticity;

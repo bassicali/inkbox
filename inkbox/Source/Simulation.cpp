@@ -103,6 +103,8 @@ void InkBoxSimulation::DrawQuad()
 void InkBoxSimulation::WindowLoop()
 {
     double last_time = 0.f;
+    bool curr_paused = false;
+    SimulationField curr_view = vars.DisplayField;
 
     while (!glfwWindowShouldClose(window))
     {
@@ -156,27 +158,32 @@ void InkBoxSimulation::WindowLoop()
             copyShader.Use();
             copyShader.SetInt("field", 0);
 
-            if (vars.DisplayField == SimulationField::Velocity)
-                fbos.VelocityVis.BindTexture(0);
-            else if (vars.DisplayField == SimulationField::Ink)
-                fbos.InkVis.BindTexture(0);
-            else if (vars.DisplayField == SimulationField::Vorticity)
-                fbos.VorticityVis.BindTexture(0);
-            else
-                fbos.PressureVis.BindTexture(0);
-
+            fbos.Get(vars.DisplayField).BindTexture(0);
             DrawQuad();
             glfwSwapBuffers(window);
+
+            curr_paused = false;
         }
-        
+        else if (!curr_paused || curr_view != vars.DisplayField)
+        {
+            _GL_WRAP2(glBindFramebuffer, GL_FRAMEBUFFER, 0);
+            copyShader.Use();
+            copyShader.SetInt("field", 0);
+
+            fbos.Get(vars.DisplayField).BindTexture(0);
+            DrawQuad();
+            glfwSwapBuffers(window);
+
+            curr_paused = true;
+            curr_view = vars.DisplayField;
+        }
+
         // Sleep for a little bit if needed
         limiter.Regulate();
 
         // Render control panel window
-
         bool update, clear;
         glfwMakeContextCurrent(controlPanel.WindowPtr());
-
         controlPanel.Render(update, clear);
 
         if (update)
@@ -268,7 +275,6 @@ bool InkBoxSimulation::CreateShaderOps()
     vorticity.SetOutput(&fbos.Vorticity);
     vorticity.SetUniformsFunc([&](GLShaderProgram& sh) -> void {
         sh.SetFloat("gs", vars.GridScale);
-        sh.SetVec2("rdv", rdv);
         sh.SetTexture("velocity", fbos.Velocity, 0);
     });
 
@@ -276,7 +282,6 @@ bool InkBoxSimulation::CreateShaderOps()
     addVorticity.SetQuad(&quad);
     addVorticity.SetUniformsFunc([&](GLShaderProgram& sh) -> void {
         sh.SetFloat("gs", vars.GridScale);
-        sh.SetVec2("rdv", rdv);
         sh.SetTexture("velocity", fbos.Velocity, 0);
         sh.SetTexture("vorticity", fbos.Vorticity, 1);
         sh.SetFloat("delta_t", 1);
@@ -285,16 +290,11 @@ bool InkBoxSimulation::CreateShaderOps()
 
     poissonSolver.SetShader(&jacobiShader);
     poissonSolver.SetQuad(&quad);
-    poissonSolver.SetUniformsFunc([&](GLShaderProgram& sh) -> void {
-        vec2 rdv2 = -rdv * rdv;
-        sh.SetVec2("rdv", rdv);
-    });
 
     gradient.SetShader(&gradShader);
     gradient.SetQuad(&quad);
     gradient.SetUniformsFunc([&](GLShaderProgram& sh) -> void {
         sh.SetFloat("gs", vars.GridScale);
-        sh.SetVec2("rdv", rdv);
         sh.SetTexture("field", fbos.Pressure, 0);
     });
 
@@ -302,7 +302,6 @@ bool InkBoxSimulation::CreateShaderOps()
     divergence.SetQuad(&quad);
     divergence.SetUniformsFunc([&](GLShaderProgram& sh) -> void {
         sh.SetFloat("gs", vars.GridScale);
-        sh.SetVec2("rdv", rdv);
         sh.SetTexture("field", fbos.Velocity, 0);
     });
 
@@ -517,7 +516,6 @@ void InkBoxSimulation::SolvePoissonSystem(SwapFBO& swap, FBO& initial_value, flo
 {
     CopyFBO(fbos.Temp, initial_value);
     poissonSolver.Use();
-    poissonSolver.Shader().SetVec2("rdv", rdv);
     poissonSolver.Shader().SetFloat("alpha", alpha);
     poissonSolver.Shader().SetFloat("beta", beta);
     poissonSolver.Shader().SetTexture("b", fbos.Temp, 1);
@@ -594,6 +592,18 @@ SimulationFields::SimulationFields(int width, int height)
     , VorticityVis(width, height)
     , Temp(width, height)
 {
+}
+
+FBO& SimulationFields::Get(SimulationField field)
+{
+    if (field == SimulationField::Velocity)
+        return VelocityVis;
+    else if (field == SimulationField::Ink)
+        return InkVis;
+    else if (field == SimulationField::Vorticity)
+        return VorticityVis;
+    else
+        return PressureVis;
 }
 
 void SimulationFields::Resize(int w, int h, GLShaderProgram& shader, VertexList& quad)
