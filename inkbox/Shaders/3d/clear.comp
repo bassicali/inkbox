@@ -1,0 +1,12 @@
+#version 430
+
+layout(local_size_x=1, local_size_y=1, local_size_z=1) in;
+
+layout(rgba16_snorm) 
+uniform image3D field_w;
+
+void main()
+{
+	ivec3 coord = ivec3(gl_GlobalInvocationID);
+	imageStore(field_w, coord, vec4(0));
+}

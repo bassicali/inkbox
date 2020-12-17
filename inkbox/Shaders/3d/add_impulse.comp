@@ -1,0 +1,30 @@
+#version 430
+
+layout(local_size_x=1, local_size_y=1, local_size_z=1) in;
+
+layout(rgba16_snorm) 
+uniform image3D field_r;
+
+layout(rgba16_snorm) 
+uniform image3D field_w;
+
+uniform vec3 position;
+uniform float radius;
+uniform vec4 force;     // This is a vec4 because it's also used to add ink/colour 
+
+void impulse_point(ivec3 coord)
+{
+    vec3 diff = position - vec3(coord);
+    float x = -dot(diff,diff) / radius;
+    vec4 effect = force * exp(x);
+
+    vec4 u0 = imageLoad(field_r, coord);
+    vec4 summed = clamp(u0 + effect, -1, 1);
+    imageStore(field_w, coord, summed);
+}
+
+void main()
+{
+    ivec3 coord = ivec3(gl_GlobalInvocationID);
+    impulse_point(coord);
+}

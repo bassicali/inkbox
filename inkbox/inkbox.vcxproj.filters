@@ -22,12 +22,15 @@
     <Filter Include="Resources">
       <UniqueIdentifier>{d2b4a91c-074c-4ee2-bcc6-a8e4b7c147f1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shaders\2d">
+      <UniqueIdentifier>{f932d4a4-f223-41c3-a59e-e89bb9b85a03}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\3d">
+      <UniqueIdentifier>{63011b79-0cee-40f1-b8af-ab221e838f35}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\Shader.h">
-      <Filter>Include</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Simulation.h">
       <Filter>Include</Filter>
     </ClInclude>
     <ClInclude Include="Include\FBO.h">
@@ -70,15 +73,30 @@
     <ClInclude Include="Include\Common.h">
       <Filter>Include</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Simulation2D.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Simulation3D.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Camera.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Texture.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Tests.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Utils.h">
+      <Filter>Include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Main.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="Source\Shader.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Simulation.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="..\thirdparty\opengl\glad.c">
@@ -105,9 +123,6 @@
     <ClCompile Include="Source\ShaderOp.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Source\VertexList.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Interface.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -117,55 +132,112 @@
     <ClCompile Include="Source\Common.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Simulation2D.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Simulation3D.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Camera.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Texture.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\VertexList.cpp">
+      <Filter>ThirdParty\Include</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Tests.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Utils.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="Shaders\advection.f.glsl">
-      <Filter>Shaders</Filter>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\tex_coords.v.glsl">
-      <Filter>Shaders</Filter>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\jacobi.f.glsl">
-      <Filter>Shaders</Filter>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\subtract.f.glsl">
-      <Filter>Shaders</Filter>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\divergence.f.glsl">
-      <Filter>Shaders</Filter>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\gradient.f.glsl">
-      <Filter>Shaders</Filter>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\copy.f.glsl">
-      <Filter>Shaders</Filter>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\boundary.f.glsl">
-      <Filter>Shaders</Filter>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\add_impulse.f.glsl">
-      <Filter>Shaders</Filter>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\common.glsl">
-      <Filter>Shaders</Filter>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\scalar_vis.f.glsl">
-      <Filter>Shaders</Filter>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\vector_vis.f.glsl">
-      <Filter>Shaders</Filter>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\add_vorticity.f.glsl">
-      <Filter>Shaders</Filter>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\vorticity.f.glsl">
-      <Filter>Shaders</Filter>
-    </CopyFileToFolders>
     <CopyFileToFolders Include="Resources\imgui.ini">
       <Filter>Resources</Filter>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\add_radial_impulse.f.glsl">
-      <Filter>Shaders</Filter>
+    <CopyFileToFolders Include="Shaders\2d\add_impulse.f.glsl">
+      <Filter>Shaders\2d</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\2d\add_radial_impulse.f.glsl">
+      <Filter>Shaders\2d</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\2d\add_vorticity.f.glsl">
+      <Filter>Shaders\2d</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\2d\advection.f.glsl">
+      <Filter>Shaders\2d</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\2d\boundary.f.glsl">
+      <Filter>Shaders\2d</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\2d\common.glsl">
+      <Filter>Shaders\2d</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\2d\copy.f.glsl">
+      <Filter>Shaders\2d</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\2d\divergence.f.glsl">
+      <Filter>Shaders\2d</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\2d\gradient.f.glsl">
+      <Filter>Shaders\2d</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\2d\jacobi.f.glsl">
+      <Filter>Shaders\2d</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\2d\scalar_vis.f.glsl">
+      <Filter>Shaders\2d</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\2d\subtract.f.glsl">
+      <Filter>Shaders\2d</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\2d\tex_coords.v.glsl">
+      <Filter>Shaders\2d</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\2d\vector_vis.f.glsl">
+      <Filter>Shaders\2d</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\2d\vorticity.f.glsl">
+      <Filter>Shaders\2d</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\3d\add_impulse.comp">
+      <Filter>Shaders\3d</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\3d\tex_coords.vert">
+      <Filter>Shaders\3d</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\3d\view.frag">
+      <Filter>Shaders\3d</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\3d\advection.comp">
+      <Filter>Shaders\3d</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\3d\border.frag">
+      <Filter>Shaders\3d</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\3d\divergence.comp">
+      <Filter>Shaders\3d</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\3d\gradient.comp">
+      <Filter>Shaders\3d</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\3d\subtract.comp">
+      <Filter>Shaders\3d</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\3d\copy.comp">
+      <Filter>Shaders\3d</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\3d\jacobi.comp">
+      <Filter>Shaders\3d</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\3d\boundary.comp">
+      <Filter>Shaders\3d</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\3d\clear.comp">
+      <Filter>Shaders\3d</Filter>
     </CopyFileToFolders>
   </ItemGroup>
   <ItemGroup>

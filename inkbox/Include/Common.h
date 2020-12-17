@@ -3,6 +3,8 @@
 #include <string>
 #include <cstdlib>
 
+#include <glm/vec3.hpp>
+
 #define LOG_INFO(FMT,...) printf("[INFO] " FMT "\n",__VA_ARGS__)
 #define LOG_WARN(FMT,...) printf("[WARN] " FMT "\n",__VA_ARGS__)
 #define LOG_ERROR(FMT,...) printf("[ERRO] " FMT "\n",__VA_ARGS__)
@@ -28,6 +30,7 @@
 #define _GL_WRAP7(GLFUNC,a,b,c,d,e,f,g) GLFUNC((a),(b),(c),(d),(e),(f),(g)); __CheckForGLErrors(__FILE__, __LINE__,#GLFUNC)
 #define _GL_WRAP8(GLFUNC,a,b,c,d,e,f,g,h) GLFUNC((a),(b),(c),(d),(e),(f),(g),(h)); __CheckForGLErrors(__FILE__, __LINE__,#GLFUNC)
 #define _GL_WRAP9(GLFUNC,a,b,c,d,e,f,g,h,i) GLFUNC((a),(b),(c),(d),(e),(f),(g),(h),(i)); __CheckForGLErrors(__FILE__, __LINE__,#GLFUNC)
+#define _GL_WRAP10(GLFUNC,a,b,c,d,e,f,g,h,i,j) GLFUNC((a),(b),(c),(d),(e),(f),(g),(h),(i),(j)); __CheckForGLErrors(__FILE__, __LINE__,#GLFUNC)
 #else
 #define _GL_WRAP0(GLFUNC) GLFUNC();
 #define _GL_WRAP1(GLFUNC,a) GLFUNC((a));
@@ -39,8 +42,7 @@
 #define _GL_WRAP7(GLFUNC,a,b,c,d,e,f,g) GLFUNC((a),(b),(c),(d),(e),(f),(g));
 #define _GL_WRAP8(GLFUNC,a,b,c,d,e,f,g,h) GLFUNC((a),(b),(c),(d),(e),(f),(g),(h));
 #define _GL_WRAP9(GLFUNC,a,b,c,d,e,f,g,h,i) GLFUNC((a),(b),(c),(d),(e),(f),(g),(h),(i));
+#define _GL_WRAP10(GLFUNC,a,b,c,d,e,f,g,h,i,j) GLFUNC((a),(b),(c),(d),(e),(f),(g),(h),(i),(j));
 #endif
-
-std::string ReadFile(const char* path);
 
 void __CheckForGLErrors(const char* file, int line, const char* function);

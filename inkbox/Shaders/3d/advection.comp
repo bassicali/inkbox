@@ -1,0 +1,49 @@
+#version 430
+
+layout(local_size_x=1, local_size_y=1, local_size_z=1) in;
+
+layout(rgba16_snorm) 
+uniform image3D velocity;
+
+layout(rgba16_snorm) 
+uniform image3D quantity_r;
+
+layout(rgba16_snorm) 
+uniform image3D quantity_w;
+
+uniform float delta_t;                      // Time step
+uniform float dissipation = 1.0f;           // Dissipation factor
+uniform float gs;
+
+// Adding gravity in a separate shader would require more imageLoad calls so we do it here
+uniform float gravity;
+
+vec3 grid_clamp(vec3 v)
+{
+    return sign(v) * max(vec3(1,1,1), abs(round(v)));
+}
+
+ivec3 clamp_coord(ivec3 coord, ivec3 size)
+{
+    return clamp(coord, ivec3(0, 0, 0), size);
+}
+
+void advect_point(ivec3 coord)
+{
+    vec3 u1 = imageLoad(velocity, coord).xyz;
+    //u1 += vec3(0, -gravity, 0);
+
+    vec3 delta = delta_t * gs * u1;
+    ivec3 pos0 = clamp_coord(ivec3(coord - grid_clamp(delta)), imageSize(quantity_r));
+
+    vec4 u0 = dissipation * imageLoad(quantity_r, pos0);
+    u0 += vec4(0, -gravity, 0, 0);
+
+    imageStore(quantity_w, coord, u0);
+}
+
+void main()
+{
+    ivec3 coord = ivec3(gl_GlobalInvocationID);
+    advect_point(coord);
+}

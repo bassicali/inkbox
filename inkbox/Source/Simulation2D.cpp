@@ -1,4 +1,4 @@
-#include "Simulation.h"
+#include "Simulation2D.h"
 
 #include <iostream>
 #include <thread>
@@ -15,7 +15,7 @@
 using namespace std;
 using namespace glm;
 
-InkBoxSimulation::InkBoxSimulation(const InkBoxWindows& app, int width, int height)
+InkBox2DSimulation::InkBox2DSimulation(const InkBoxWindows& app, int width, int height)
     : width(width)
     , height(height)
     , fbos(width, height)
@@ -32,18 +32,18 @@ InkBoxSimulation::InkBoxSimulation(const InkBoxWindows& app, int width, int heig
     , timestep(0)
     , paused(false)
 {
-    ui.SetValues(vars.GridScale, vars.Viscosity, vars.InkViscosity, vars.Vorticity, vars.SplatRadius, vars.AdvectionDissipation, vars.InkAdvectionDissipation, vars.InkVolume);
+    ui.SetValues(vars);
     controlPanel = ControlPanel(app.Controls, &vars, &ui, &impulseState, &fbos.VelocityVis, &fbos.PressureVis, &fbos.InkVis, &fbos.VorticityVis);
 
     glfwSetWindowUserPointer(app.Main, this);
 }
 
-void InkBoxSimulation::Terminate()
+void InkBox2DSimulation::Terminate()
 {
     glfwTerminate();
 }
 
-bool InkBoxSimulation::CreateScene()
+bool InkBox2DSimulation::CreateScene()
 {
     vec2 c(1.f-0.5f/width, 1.f-0.5f/height);
     float outer_vertices[] =
@@ -54,16 +54,16 @@ bool InkBoxSimulation::CreateScene()
         -c.x, -c.y, 0.0f,   // top left 
     };
 
-    int top[] = { 3,0 };
+    unsigned int top[] = { 3,0 };
     borderT.Init(&outer_vertices[0], 12, top, 2);
 
-    int bottom[] = { 1,2 };
+    unsigned int bottom[] = { 1,2 };
     borderB.Init(&outer_vertices[0], 12, bottom, 2);
 
-    int left[] = { 2,3 };
+    unsigned int left[] = { 2,3 };
     borderL.Init(&outer_vertices[0], 12, left, 2);
 
-    int right[] = { 0,1 };
+    unsigned int right[] = { 0,1 };
     borderR.Init(&outer_vertices[0], 12, right, 2);
 
 
@@ -76,7 +76,7 @@ bool InkBoxSimulation::CreateScene()
         -c.x, -c.y, 0.0f,   // top left 
     };
 
-    int quad_indices[] =
+    unsigned int quad_indices[] =
     {
         0, 1, 3,
         1, 2, 3
@@ -94,13 +94,13 @@ bool InkBoxSimulation::CreateScene()
     return true;
 }
 
-void InkBoxSimulation::DrawQuad()
+void InkBox2DSimulation::DrawQuad()
 {
     _GL_WRAP1(glBindVertexArray, quad.VAO);
     _GL_WRAP4(glDrawElements, GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 }
 
-void InkBoxSimulation::WindowLoop()
+void InkBox2DSimulation::WindowLoop()
 {
     double last_time = 0.f;
     bool curr_paused = false;
@@ -118,7 +118,6 @@ void InkBoxSimulation::WindowLoop()
 
         if (!paused)
         {
-
             if (vars.DropletsMode)
                 TickDropletsMode();
 
@@ -201,7 +200,7 @@ void InkBoxSimulation::WindowLoop()
     }
 }
 
-void InkBoxSimulation::SetDimensions(int w, int h)
+void InkBox2DSimulation::SetDimensions(int w, int h)
 {
     width = w;
     height = h;
@@ -224,29 +223,27 @@ bool _AddFragShader(GLShaderProgram& program, GLShader& vShader, GLShader& fShad
     return true;
 }
 
-bool InkBoxSimulation::CreateShaderOps()
+bool InkBox2DSimulation::CreateShaderOps()
 {
 #define ADD_SHADER(obj,file) { GLShader fs(file, ShaderType::Fragment); if (!_AddFragShader(obj, vs, fs)) return false; obj.Use(); obj.SetVec2("stride", rdv); }
 
-    GLShader vs("tex_coords.v.glsl", ShaderType::Vertex);
+    GLShader vs("2d\\tex_coords.v.glsl", ShaderType::Vertex);
     if (!vs.Compile())
         return false;
 
-    ADD_SHADER(impulseShader,       "add_impulse.f.glsl")
-    ADD_SHADER(radialImpulseShader, "add_radial_impulse.f.glsl")
-    ADD_SHADER(advectionShader,     "advection.f.glsl")
-    ADD_SHADER(jacobiShader,        "jacobi.f.glsl")
-    ADD_SHADER(divShader,           "divergence.f.glsl")
-    ADD_SHADER(gradShader,          "gradient.f.glsl")
-    ADD_SHADER(subtractShader,      "subtract.f.glsl")
-    ADD_SHADER(boundaryShader,      "boundary.f.glsl")
-    ADD_SHADER(vorticityShader,     "vorticity.f.glsl")
-    ADD_SHADER(addVorticityShader,  "add_vorticity.f.glsl")
-    ADD_SHADER(vectorVisShader,     "vector_vis.f.glsl")
-    ADD_SHADER(scalarVisShader,     "scalar_vis.f.glsl")
-    ADD_SHADER(copyShader,          "copy.f.glsl")
-
-    vec2 dimensions(width, height);
+    ADD_SHADER(impulseShader,       "2d\\add_impulse.f.glsl")
+    ADD_SHADER(radialImpulseShader, "2d\\add_radial_impulse.f.glsl")
+    ADD_SHADER(advectionShader,     "2d\\advection.f.glsl")
+    ADD_SHADER(jacobiShader,        "2d\\jacobi.f.glsl")
+    ADD_SHADER(divShader,           "2d\\divergence.f.glsl")
+    ADD_SHADER(gradShader,          "2d\\gradient.f.glsl")
+    ADD_SHADER(subtractShader,      "2d\\subtract.f.glsl")
+    ADD_SHADER(boundaryShader,      "2d\\boundary.f.glsl")
+    ADD_SHADER(vorticityShader,     "2d\\vorticity.f.glsl")
+    ADD_SHADER(addVorticityShader,  "2d\\add_vorticity.f.glsl")
+    ADD_SHADER(vectorVisShader,     "2d\\vector_vis.f.glsl")
+    ADD_SHADER(scalarVisShader,     "2d\\scalar_vis.f.glsl")
+    ADD_SHADER(copyShader,          "2d\\copy.f.glsl")
 
     impulse.SetShader(&impulseShader);
     impulse.SetQuad(&quad);
@@ -321,7 +318,7 @@ bool InkBoxSimulation::CreateShaderOps()
 #undef ADD_SHADER
 }
 
-void InkBoxSimulation::ProcessInputs()
+void InkBox2DSimulation::ProcessInputs()
 {
     static int pkey = 0;
     if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
@@ -362,7 +359,7 @@ void InkBoxSimulation::ProcessInputs()
     }
 }
 
-void InkBoxSimulation::ComputeFields(float delta_t)
+void InkBox2DSimulation::ComputeFields(float delta_t)
 {
     if (!vars.SelfAdvect && !vars.AdvectInk && !vars.DiffuseVelocity && !vars.AddVorticity)
         return;
@@ -418,7 +415,7 @@ void InkBoxSimulation::ComputeFields(float delta_t)
 
         op->Use();
         op->SetOutput(&fbos.Velocity.Back());
-        op->Shader().SetVec2("position", impulseState.CurrentPos * rdv);
+        op->Shader().SetVec2("position", vec2(impulseState.CurrentPos.x, impulseState.CurrentPos.y) * rdv);
         op->Shader().SetFloat("radius", vars.SplatRadius);
         op->Shader().SetTexture("velocity", fbos.Velocity, 0);
 
@@ -433,7 +430,7 @@ void InkBoxSimulation::ComputeFields(float delta_t)
             vec3 colour(vars.InkColour.x, vars.InkColour.y, vars.InkColour.z);
             impulse.Use();
             impulse.SetOutput(&fbos.Ink.Back());
-            impulse.Shader().SetVec2("position", impulseState.CurrentPos * rdv);
+            impulse.Shader().SetVec2("position", vec2(impulseState.CurrentPos.x, impulseState.CurrentPos.y) * rdv);
             impulse.Shader().SetVec3("force", colour);
             impulse.Shader().SetFloat("radius", vars.InkVolume);
             impulse.Shader().SetTexture("velocity", fbos.Ink, 0);
@@ -498,7 +495,7 @@ void InkBoxSimulation::ComputeFields(float delta_t)
     ComputeBoundaryValues(fbos.Velocity, -1);
 }
 
-void InkBoxSimulation::ComputeBoundaryValues(SwapFBO& swap, float scale)
+void InkBox2DSimulation::ComputeBoundaryValues(SwapFBO& swap, float scale)
 {
     if (!vars.BoundariesEnabled)
         return;
@@ -512,7 +509,7 @@ void InkBoxSimulation::ComputeBoundaryValues(SwapFBO& swap, float scale)
     swap.Swap();
 }
 
-void InkBoxSimulation::SolvePoissonSystem(SwapFBO& swap, FBO& initial_value, float alpha, float beta)
+void InkBox2DSimulation::SolvePoissonSystem(SwapFBO& swap, FBO& initial_value, float alpha, float beta)
 {
     CopyFBO(fbos.Temp, initial_value);
     poissonSolver.Use();
@@ -529,19 +526,19 @@ void InkBoxSimulation::SolvePoissonSystem(SwapFBO& swap, FBO& initial_value, flo
     }
 }
 
-void InkBoxSimulation::SolvePoissonSystem(SwapFBO& swap, float alpha, float beta)
+void InkBox2DSimulation::SolvePoissonSystem(SwapFBO& swap, float alpha, float beta)
 {
     SolvePoissonSystem(swap, swap.Front(), alpha, beta);
 }
 
-vec2 InkBoxSimulation::RandPos()
+vec2 InkBox2DSimulation::RandPos()
 {
     int x = rand() % width;
     int y = rand() % height;
     return vec2(x, y);
 }
 
-void InkBoxSimulation::TickDropletsMode()
+void InkBox2DSimulation::TickDropletsMode()
 {
     static float acc = 0;
     static float next_drop = 0;
@@ -553,8 +550,11 @@ void InkBoxSimulation::TickDropletsMode()
         acc = 0;
         next_drop = (rand() % (freq_range.y - freq_range.x)) + freq_range.x;
 
-        impulseState.LastPos = RandPos();
-        impulseState.CurrentPos = RandPos();
+        vec2 rand_pos0, rand_pos1;
+        rand_pos0 = RandPos();
+        rand_pos1 = RandPos();
+        impulseState.LastPos = vec3(rand_pos0.x, rand_pos0.y, 0);
+        impulseState.CurrentPos = vec3(rand_pos1.x, rand_pos1.y, 0);
         impulseState.Delta = impulseState.CurrentPos - impulseState.LastPos;
         impulseState.ForceActive = true;
         impulseState.InkActive = true;
@@ -568,7 +568,7 @@ void InkBoxSimulation::TickDropletsMode()
     }
 }
 
-void InkBoxSimulation::CopyFBO(FBO& dest, FBO& src)
+void InkBox2DSimulation::CopyFBO(FBO& dest, FBO& src)
 {
     dest.Bind();
     copyShader.Use();
@@ -581,16 +581,16 @@ void InkBoxSimulation::CopyFBO(FBO& dest, FBO& src)
 ///     SimulationFields    ///
 ///////////////////////////////
 
-SimulationFields::SimulationFields(int width, int height)
-    : Velocity(width, height)
-    , Pressure(width, height)
-    , Vorticity(width, height)
-    , Ink(width, height)
-    , VelocityVis(width, height)
-    , PressureVis(width, height)
-    , InkVis(width, height)
-    , VorticityVis(width, height)
-    , Temp(width, height)
+SimulationFields::SimulationFields(int width, int height, int depth)
+    : Velocity(width, height, depth)
+    , Pressure(width, height, depth)
+    , Vorticity(width, height, depth)
+    , Ink(width, height, depth)
+    , VelocityVis(width, height, depth)
+    , PressureVis(width, height, depth)
+    , InkVis(width, height, depth)
+    , VorticityVis(width, height, depth)
+    , Temp(width, height, depth)
 {
 }
 

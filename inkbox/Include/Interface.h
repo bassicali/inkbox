@@ -20,7 +20,7 @@ struct InkBoxWindows
 	InkBoxWindows();
 	~InkBoxWindows();
 
-	bool InitGLContexts(int width, int height);
+	bool InitGLContexts(int width, int height, int ctrl_width, int ctrl_height);
 
 	GLFWwindow* Main;
 	GLFWwindow* Controls;
@@ -44,12 +44,12 @@ struct ImpulseState
 	void Reset();
 	bool IsActive() const { return InkActive || ForceActive; }
 
-	glm::vec2 LastPos;
-	glm::vec2 CurrentPos;
+	glm::vec3 LastPos;
+	glm::vec3 CurrentPos;
 	bool ForceActive;
 	bool InkActive;
 	bool Radial;
-	glm::vec2 Delta;
+	glm::vec3 Delta;
 };
 
 struct SimulationVars
@@ -72,6 +72,8 @@ struct SimulationVars
 	float Vorticity;
 	float AdvectionDissipation;
 	float InkAdvectionDissipation;
+	float Gravity;
+	float ForceMultiplier;
 	glm::vec4 InkColour;
 	SimulationField DisplayField;
 };
@@ -79,7 +81,8 @@ struct SimulationVars
 struct VarTextBoxes
 {
 	VarTextBoxes();
-	void SetValues(float gridscale, float viscosity, float ink_viscosity, float vorticity, float splat_radius, float adv_dissipation, float ink_adv_dissipation, float ink_volume);
+	void SetValues(float gridscale, float viscosity, float ink_viscosity, float vorticity, float splat_radius, float adv_dissipation, float ink_adv_dissipation, float ink_volume, float gravity, float fmult);
+	void SetValues(SimulationVars& vars);
 	void UpdateVars(SimulationVars& vars);
 	char GridScale[TEXTBOX_LEN];
 	char AdvDissipation[TEXTBOX_LEN];
@@ -88,7 +91,9 @@ struct VarTextBoxes
 	char Viscosity[TEXTBOX_LEN];
 	char InkViscosity[TEXTBOX_LEN];
 	char Vorticity[TEXTBOX_LEN];
+	char Gravity[TEXTBOX_LEN];
 	char InkVolume[TEXTBOX_LEN];
+	char ForceMultiplier[TEXTBOX_LEN];
 };
 
 class ControlPanel
@@ -96,6 +101,7 @@ class ControlPanel
 public:
 	ControlPanel();
 	ControlPanel(GLFWwindow* win, SimulationVars* vars, VarTextBoxes* texts, ImpulseState* impulse, FBO* ufbo, FBO* pfbo, FBO* ifbo, FBO* vfbo);
+	ControlPanel(GLFWwindow* win, SimulationVars* vars, VarTextBoxes* texts, ImpulseState* impulse);
 	void Render(bool& update_vars, bool& clear_buffers);
 	GLFWwindow* WindowPtr() const { return window; }
 
@@ -104,6 +110,7 @@ private:
 	SimulationVars* simvars;
 	VarTextBoxes* texts;
 	ImpulseState* impulse;
+	bool is3D;
 	FBO* velocity;
 	FBO* vorticity;
 	FBO* pressure;
@@ -115,7 +122,7 @@ class FPSLimiter
 public:
 	FPSLimiter(int fps);
 	void Regulate();
-
+	float AverageFPS() const { return 1000 / avgFrameTime; }
 private:
 	float simFrameTime;
 	float avgFrameTime;

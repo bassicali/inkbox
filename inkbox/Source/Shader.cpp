@@ -1,7 +1,6 @@
 
 #include "Shader.h"
 
-#include <iostream>
 #include <exception>
 #include <fstream>
 #include <filesystem>
@@ -12,10 +11,12 @@
 
 #include "FBO.h"
 #include "Common.h"
+#include "Utils.h"
 
 using namespace std;
 
 regex re_include("^[ \\t]*#include[ \\t]+[<\"]([\\.\\w]+?)[>\"][ \\t]*$", regex_constants::optimize | regex_constants::ECMAScript);
+regex re_local_size_decl("^[ \\t]*layout[ \\t]*\\([ \\t]*local_size_.*$", regex_constants::optimize | regex_constants::ECMAScript);
 
 
 ///////////////////////////
@@ -69,14 +70,14 @@ void GLShaderProgram::SetFloat(std::string name, float value)
 		_GL_WRAP2(glUniform1f, loc, value);
 }
 
-void GLShaderProgram::SetVec2(string name, glm::vec2 value)
+void GLShaderProgram::SetVec2(string name, const glm::vec2& value)
 {
 	int loc;
 	if ((loc = GetUniformLoc(name)) != -1)
 		_GL_WRAP3(glUniform2fv, loc, 1, &value[0]);
 }
 
-void GLShaderProgram::SetVec3(std::string name, glm::vec3 value)
+void GLShaderProgram::SetVec3(std::string name, const glm::vec3& value)
 {
 	int loc;
 	if ((loc = GetUniformLoc(name)) != -1)
@@ -90,17 +91,36 @@ void GLShaderProgram::SetVec2(std::string name, float x, float y)
 		_GL_WRAP3(glUniform2f, loc, x, y);
 }
 
-void GLShaderProgram::SetVec4(std::string name, glm::vec4 value)
+void GLShaderProgram::SetVec4(std::string name, const glm::vec4& value)
 {
 	int loc;
 	if ((loc = GetUniformLoc(name)) != -1)
 		_GL_WRAP3(glUniform4fv, loc, 1, &value[0]);
 }
 
+void GLShaderProgram::SetMatrix4x4(std::string name, const glm::mat4& value)
+{
+	int loc;
+	if ((loc = GetUniformLoc(name)) != -1)
+		_GL_WRAP4(glUniformMatrix4fv, loc, 1, GL_FALSE, &value[0][0]);
+}
+
+void GLShaderProgram::SetTexture(std::string name, Texture& tex, int value)
+{
+	SetInt(name, value);
+	tex.Bind(value);
+}
+
 void GLShaderProgram::SetTexture(std::string name, IFBO& fbo, int value)
 {
 	SetInt(name, value);
 	fbo.BindTexture(value);
+}
+
+void GLShaderProgram::SetImage(std::string name, Texture& texture, int value, int access)
+{
+	SetInt(name, value);
+	texture.BindToImage(value, access);
 }
 
 void GLShaderProgram::UseNone()
@@ -112,7 +132,7 @@ void GLShaderProgram::LoadIncludeFile(const char* file)
 {
 	using namespace std::filesystem;
 
-	string source = ReadFile(file);
+	string source = utils::ReadFile(file);
 	string name = path(file).filename().string();
 	_GL_WRAP5(glNamedStringARB, GL_SHADER_INCLUDE_ARB, name.length(), name.c_str(), source.length(), source.c_str());
 }
@@ -122,9 +142,7 @@ bool GLShaderProgram::Link()
 	_GL_WRAP1(glLinkProgram, id);
 
 	if (HasLinkErrors())
-	{
 		return false;
-	}
 
 	return true;
 }
@@ -153,7 +171,7 @@ bool GLShaderProgram::HasLinkErrors()
 	if (!success)
 	{
 		_GL_WRAP4(glGetShaderInfoLog, id, 1024, nullptr, message);
-		cout << "Shader program link error(s):" << message << endl;
+		LOG_ERROR("Shader program link error(s): %s", message);
 		return true;
 	}
 
@@ -185,11 +203,20 @@ bool GLShaderProgram::Validate()
 ////////////////////////////
 ///        GLShader      ///
 ////////////////////////////
-GLShader::GLShader(const char* path, ShaderType shader_type)
+GLShader::GLShader(const char* path, ShaderType shader_type, glm::uvec3 compute_local_size)
 	: id(0)
 	, type(shader_type)
+	, computeShaderLocalSize(compute_local_size)
 {
+	namespace fs = std::filesystem;
+
+	if (shader_type != ShaderType::Compute && (computeShaderLocalSize.x != 0 || computeShaderLocalSize.y != 0 || computeShaderLocalSize.z != 0))
+	{
+		throw exception("Local size values are only valid for compute shaders");
+	}
+
 	sourceFile = string(path);
+	fileName = fs::path(path).filename().string();
 	sourceCode = ProcessSourceCode(path);
 }
 
@@ -214,6 +241,17 @@ string GLShader::ProcessSourceCode(std::string file)
 
 			processed << ProcessSourceCode(include_file_path) << endl;
 		}
+		else if (type == ShaderType::Compute && regex_match(ln, match, re_local_size_decl))
+		{
+			if (computeShaderLocalSize.x != 0 && computeShaderLocalSize.y != 0 && computeShaderLocalSize.z != 0)
+			{
+				processed << "layout(local_size_x=" << computeShaderLocalSize.x
+					<< ", local_size_y=" << computeShaderLocalSize.y
+					<< ", local_size_z=" << computeShaderLocalSize.z << ") in;"
+					<< endl;
+				//LOG_INFO("Injected custom local size into compute shader %s: (x=%d, y=%d, z=%d)", file.c_str(), computeShaderLocalSize.x, computeShaderLocalSize.y, computeShaderLocalSize.z);
+			}
+		}
 		else
 		{
 			processed << ln << endl;
@@ -233,6 +271,9 @@ bool GLShader::Compile()
 		break;
 	case ShaderType::Fragment:
 		type_id = GL_FRAGMENT_SHADER;
+		break;
+	case ShaderType::Compute:
+		type_id = GL_COMPUTE_SHADER;
 		break;
 	default:
 		throw runtime_error(string("Invalid shader type"));
@@ -272,9 +313,52 @@ bool GLShader::HasCompileErrors(int id)
 	if (!success)
 	{
 		_GL_WRAP4(glGetShaderInfoLog, id, 1024, nullptr, message);
-		cout << "Shader compilation error(s) (" << sourceFile << "): " << message << endl;
+		LOG_ERROR("Shader compilation error(s) (%s): %s", sourceFile.c_str(), message);
 		return true;
 	}
 
 	return false;
+}
+
+void GLComputeShader::Init()
+{
+	GLShaderProgram::Init();
+#if MEASURE_CS_TIMES
+	_GL_WRAP2(glGenQueries, 1, &timeQuery0);
+	_GL_WRAP2(glGenQueries, 1, &timeQuery1);
+#endif
+}
+
+void GLComputeShader::Execute(int x, int y, int z)
+{
+	Execute(glm::uvec3(x, y, z));
+}
+
+void GLComputeShader::Execute(glm::uvec3 num_work_groups)
+{
+
+#if MEASURE_CS_TIMES
+	_GL_WRAP2(glQueryCounter, timeQuery0, GL_TIMESTAMP);
+#endif
+
+	Use();
+	_GL_WRAP1(glMemoryBarrier, GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+	_GL_WRAP3(glDispatchCompute, num_work_groups.x, num_work_groups.y, num_work_groups.z);
+
+#if MEASURE_CS_TIMES
+	_GL_WRAP2(glQueryCounter, timeQuery1, GL_TIMESTAMP);
+
+	int finished = 0;
+	while (!finished)
+	{
+		_GL_WRAP3(glGetQueryObjectiv, timeQuery1, GL_QUERY_RESULT_AVAILABLE, &finished);
+	}
+
+	uint64_t start, end;
+	_GL_WRAP3(glGetQueryObjectui64v, timeQuery0, GL_QUERY_RESULT, &start);
+	_GL_WRAP3(glGetQueryObjectui64v, timeQuery1, GL_QUERY_RESULT, &end);
+
+	timing.TotalTime += double(end - start) / 1'000'000;
+	timing.NumExecutions++;
+#endif
 }

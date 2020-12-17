@@ -1,8 +1,9 @@
 
 #pragma once
 
-#include <optional>
+#include <glad/glad.h>
 
+#include "Texture.h"
 #include "Shader.h"
 #include "VertexList.h"
 
@@ -12,7 +13,7 @@ class IFBO
 {
 public:
 	virtual void Bind() = 0;
-	virtual void BindTexture(int unitId) = 0;
+	virtual void BindTexture(int unit_id) = 0;
 
 	virtual int Id() = 0;
 	virtual int TextureId() = 0;
@@ -25,41 +26,37 @@ class FBO : public IFBO
 {
 public:
 	FBO();
-	FBO(int width, int height, std::optional<glm::vec4> fill = std::optional<glm::vec4>());
-	FBO(int width, int height, int format, int type, int internalformat = 0, std::optional<glm::vec4> fill = std::optional<glm::vec4>());
+	FBO(int width, int height, int depth = 0, int channels = 3);
+	FBO(int width, int height, int depth, int format, int type, int internalformat = 0);
 	~FBO();
-	bool Init(int format, int type, int internalformat = 0, std::optional<glm::vec4> fill = std::optional<glm::vec4>());
+	bool Init();
 	virtual void Clear(float r = 0.f, float g = 0.f, float b = 0.f, float a = 0.0f) override;
 	virtual void Bind() override;
-	virtual void BindTexture(int unitId) override;
+	virtual void BindTexture(int unit_id) override { texture.Bind(unit_id); }
 
 	virtual int Id() override { return fboId; }
-	virtual int TextureId() override { return textureId; }
+	virtual int TextureId() override { return texture.Id(); }
 
 	virtual void Resize(int w, int h, GLShaderProgram& shader, VertexList& quad) override;
 	int Width() const { return width; }
 	int Height() const { return height; }
 
-	int Marker;
-
 private:
 	bool initialized;
 	int width;
 	int height;
-	int format;
-	int type;
-	int internalFormat;
+	int depth;
+	Texture texture;
 
-	unsigned int textureId;
 	unsigned int fboId;
 };
 
 class SwapFBO : public IFBO
 {
 public:
-	SwapFBO(int width, int height)
-		: w0(width, height)
-		, w1(width, height)
+	SwapFBO(int width, int height, int depth)
+		: w0(width, height, depth)
+		, w1(width, height, depth)
 		, ptr0(&w0)
 		, ptr1(&w1)
 	{}

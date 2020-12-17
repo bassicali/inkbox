@@ -1,7 +1,6 @@
 
 #pragma once
 
-#include <vector>
 #include <mutex>
 
 #include <glm/vec2.hpp>
@@ -17,7 +16,7 @@
 
 struct SimulationFields
 {
-	SimulationFields(int width, int height);
+	SimulationFields(int width, int height, int depth = 0);
 	FBO& Get(SimulationField field);
 	void Resize(int w, int h, GLShaderProgram& shader, VertexList& quad);
 	SwapFBO Velocity;
@@ -32,12 +31,12 @@ struct SimulationFields
 	FBO InkVis;
 };
 
-class InkBoxSimulation
+class InkBox2DSimulation
 {
-	friend class InkBoxWindows;
+	friend struct InkBoxWindows;
 
 public:
-	InkBoxSimulation(const InkBoxWindows& app, int width, int height);
+	InkBox2DSimulation(const InkBoxWindows& app, int width, int height);
 
 	bool CreateScene();
 	void WindowLoop();

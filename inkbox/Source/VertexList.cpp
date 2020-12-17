@@ -12,6 +12,7 @@ VertexList::VertexList()
     : VAO(0)
     , VBO(0)
     , EBO(0)
+    , NumVertices(0)
 {
 }
 
@@ -33,7 +34,7 @@ VertexList::~VertexList()
     }
 }
 
-void VertexList::Init(float* vertices, int num_vertices, int* indices, int num_indices)
+void VertexList::Init(float* vertices, int num_vertices, unsigned int* indices, int num_indices)
 {
     _GL_WRAP2(glGenVertexArrays, 1, &VAO);
     _GL_WRAP2(glGenBuffers, 1, &VBO);
@@ -51,5 +52,7 @@ void VertexList::Init(float* vertices, int num_vertices, int* indices, int num_i
     _GL_WRAP1(glEnableVertexAttribArray, 0);
 
     _GL_WRAP1(glBindVertexArray, 0);
+
+    NumVertices = num_indices;
 }
 

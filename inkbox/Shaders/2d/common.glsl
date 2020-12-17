@@ -1,4 +1,5 @@
 
+
 float clipf(float value, float magnitude)
 {
 	if (abs(value) > magnitude)

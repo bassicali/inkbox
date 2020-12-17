@@ -20,9 +20,6 @@
 #include "../resource.h"
 #include "Common.h"
 
-#define UI_WIN_W 750
-#define UI_WIN_H 395
-
 using namespace std;
 using namespace glm;
 
@@ -46,9 +43,9 @@ InkBoxWindows::~InkBoxWindows()
         glfwDestroyWindow(Controls);
 }
 
-bool InkBoxWindows::InitGLContexts(int width, int height)
+bool InkBoxWindows::InitGLContexts(int width, int height, int ctrl_width, int ctrl_height)
 {
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
@@ -65,12 +62,16 @@ bool InkBoxWindows::InitGLContexts(int width, int height)
         return false;
     }
 
-    glfwWindowHint(GLFW_RESIZABLE, 0);
-    Controls = glfwCreateWindow(UI_WIN_W, UI_WIN_H, CONTROLS_WINDLW_TITLE, nullptr, Main);
-    if (Controls == nullptr)
+    bool create_ctrl_pnl = ctrl_width > 0 && ctrl_height > 0;
+    if (create_ctrl_pnl)
     {
-        cout << "Failed to create GLFW window" << endl;
-        return false;
+        glfwWindowHint(GLFW_RESIZABLE, 0);
+        Controls = glfwCreateWindow(ctrl_width, ctrl_height, CONTROLS_WINDLW_TITLE, nullptr, Main);
+        if (Controls == nullptr)
+        {
+            cout << "Failed to create GLFW window" << endl;
+            return false;
+        }
     }
 
     glfwMakeContextCurrent(Main);
@@ -88,27 +89,30 @@ bool InkBoxWindows::InitGLContexts(int width, int height)
     HWND hwnd = glfwGetWin32Window(Main);
     SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hico);
     SendMessage(hwnd, WM_SETICON, ICON_BIG, (LPARAM)hico);
-
-    hwnd = glfwGetWin32Window(Controls);
-    SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hico);
-    SendMessage(hwnd, WM_SETICON, ICON_BIG, (LPARAM)hico);
+    BringWindowToTop(hwnd);
 
     hwnd = GetConsoleWindow();
     SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hico);
     SendMessage(hwnd, WM_SETICON, ICON_BIG, (LPARAM)hico);
 
+    if (create_ctrl_pnl)
+    {
+        hwnd = glfwGetWin32Window(Controls);
+        SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hico);
+        SendMessage(hwnd, WM_SETICON, ICON_BIG, (LPARAM)hico);
 
-    // Setup Dear ImGui context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
-    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+        // Setup Dear ImGui context
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImGuiIO& io = ImGui::GetIO();
+        //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
 
-    ImGui::StyleColorsDark();
-    //ImGui::StyleColorsClassic();
+        ImGui::StyleColorsDark();
 
-    ImGui_ImplGlfw_InitForOpenGL(Controls, true);
-    ImGui_ImplOpenGL3_Init("#version 330 core");
+        ImGui_ImplGlfw_InitForOpenGL(Controls, true);
+        ImGui_ImplOpenGL3_Init("#version 330 core");
+    }
+
     ViewportSize = vec2(width, height);
     return true;
 }
@@ -127,6 +131,7 @@ ControlPanel::ControlPanel()
     , pressure(nullptr)
     , ink(nullptr)
     , vorticity(nullptr)
+    , is3D(false)
 {
 }
 
@@ -139,8 +144,18 @@ ControlPanel::ControlPanel(GLFWwindow* win, SimulationVars* vars, VarTextBoxes* 
     , pressure(pfbo)
     , ink(ifbo)
     , vorticity(vfbo)
+    , is3D(false)
 {
     glfwSetWindowUserPointer(win, this);
+}
+
+ControlPanel::ControlPanel(GLFWwindow* win, SimulationVars* vars, VarTextBoxes* texts, ImpulseState* impulse)
+    : window(win)
+    , simvars(vars)
+    , texts(texts)
+    , impulse(impulse)
+    , is3D(true)
+{
 }
 
 void ControlPanel::Render(bool& update_vars, bool& clear_buffers)
@@ -171,15 +186,27 @@ void ControlPanel::Render(bool& update_vars, bool& clear_buffers)
     ImGui::SameLine(200);
     ImGui::Checkbox("Ink Diffusion", &simvars->DiffuseInk);
 
-    ImGui::Checkbox("Vorticity", &simvars->AddVorticity);
-    ImGui::SameLine(200);
+    if (!is3D)
+    {
+        ImGui::Checkbox("Vorticity", &simvars->AddVorticity);
+        ImGui::SameLine(200);
+    }
+
     ImGui::Checkbox("Boundary Conditions", &simvars->BoundariesEnabled);
 
     ImGui::Separator();
     ImGui::Text("Variables");
     TEXTBOX("Grid Scale", texts->GridScale);
     ImGui::SameLine(200);
-    TEXTBOX("Vorticity##3", texts->Vorticity);
+
+    if (!is3D)
+    {
+        TEXTBOX("Vorticity##3", texts->Vorticity);
+    }
+    else
+    {
+        TEXTBOX("Gravity##3", texts->Gravity);
+    }
 
     TEXTBOX("Viscosity", texts->Viscosity);
     ImGui::SameLine(200);
@@ -193,6 +220,11 @@ void ControlPanel::Render(bool& update_vars, bool& clear_buffers)
     ImGui::SameLine(200);
     TEXTBOX("Ink Volume", texts->InkVolume);
     
+    if (is3D)
+    {
+        TEXTBOX("Force Multiplier", texts->ForceMultiplier);
+    }
+
     // ImVec4 and glm::vec4 have the same layout
     ImGui::ColorEdit4("Ink Colour", (float*)&simvars->InkColour, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
     ImGui::SameLine();
@@ -207,42 +239,51 @@ void ControlPanel::Render(bool& update_vars, bool& clear_buffers)
     if (ImGui::Button("Clear"))
         clear_buffers = true;
 
-    ImGui::Separator();
-    ImGui::Text("Viewport");
-    int* radio_field = (int*)(&simvars->DisplayField);
-    ImGui::RadioButton("Ink", radio_field, 0);
-    ImGui::SameLine();
-    ImGui::RadioButton("Velocity", radio_field, 1);
-    ImGui::SameLine();
-    ImGui::RadioButton("Pressure", radio_field, 2);
-    ImGui::SameLine();
-    ImGui::RadioButton("Vorticity##1", radio_field, 3);
+    if (!is3D)
+    {
+        ImGui::Separator();
+        ImGui::Text("Viewport");
+        int* radio_field = (int*)(&simvars->DisplayField);
+        ImGui::RadioButton("Ink", radio_field, 0);
+        ImGui::SameLine();
+        ImGui::RadioButton("Velocity", radio_field, 1);
+        ImGui::SameLine();
+        ImGui::RadioButton("Pressure", radio_field, 2);
+        ImGui::SameLine();
+        ImGui::RadioButton("Vorticity##1", radio_field, 3);
+    }
 
     ImGui::Separator();
-    ImGui::Text("Force: (%.0f,%.0f) | Pos0: (%.0f,%.0f) | Pos1: (%.0f,%.0f)", impulse->Delta.x, impulse->Delta.y, impulse->LastPos.x, impulse->LastPos.y, impulse->CurrentPos.x, impulse->CurrentPos.y);
+    if (!is3D)
+        ImGui::Text("Force: (%.0f,%.0f) | Pos0: (%.0f,%.0f) | Pos1: (%.0f,%.0f)", impulse->Delta.x, impulse->Delta.y, impulse->LastPos.x, impulse->LastPos.y, impulse->CurrentPos.x, impulse->CurrentPos.y);
+    else
+        ImGui::Text("Force: (%.2f,%.2f,%.2f) | Position: (%.0f,%.0f,%.0f)", impulse->Delta.x, impulse->Delta.y, impulse->Delta.z, impulse->CurrentPos.x, impulse->CurrentPos.y, impulse->CurrentPos.z);
 
     ImGui::Separator();
     ImGui::Text("Frame Rate: %.3f ms (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
     ImGui::End();
 
-    float ratio = (float)velocity->Width() / velocity->Height();
-    ImVec2 dims(150, 150 / ratio);
+    if (!is3D)
+    {
+        float ratio = (float)velocity->Width() / velocity->Height();
+        ImVec2 dims(150, 150 / ratio);
 
-    ImGui::Begin("Ink");
-    ImGui::Image((ImTextureID)(intptr_t)ink->TextureId(), dims, uv_min, uv_max, tint_col, border_col);
-    ImGui::End();
+        ImGui::Begin("Ink");
+        ImGui::Image((ImTextureID)(intptr_t)ink->TextureId(), dims, uv_min, uv_max, tint_col, border_col);
+        ImGui::End();
 
-    ImGui::Begin("Velocity");
-    ImGui::Image((ImTextureID)(intptr_t)velocity->TextureId(), dims, uv_min, uv_max, tint_col, border_col);
-    ImGui::End();
+        ImGui::Begin("Velocity");
+        ImGui::Image((ImTextureID)(intptr_t)velocity->TextureId(), dims, uv_min, uv_max, tint_col, border_col);
+        ImGui::End();
 
-    ImGui::Begin("Pressure");
-    ImGui::Image((ImTextureID)(intptr_t)pressure->TextureId(), dims, uv_min, uv_max, tint_col, border_col);
-    ImGui::End();
+        ImGui::Begin("Pressure");
+        ImGui::Image((ImTextureID)(intptr_t)pressure->TextureId(), dims, uv_min, uv_max, tint_col, border_col);
+        ImGui::End();
 
-    ImGui::Begin("Vorticity##2");
-    ImGui::Image((ImTextureID)(intptr_t)vorticity->TextureId(), dims, uv_min, uv_max, tint_col, border_col);
-    ImGui::End();
+        ImGui::Begin("Vorticity##2");
+        ImGui::Image((ImTextureID)(intptr_t)vorticity->TextureId(), dims, uv_min, uv_max, tint_col, border_col);
+        ImGui::End();
+    }
 
     // Rendering
     ImGui::Render();
@@ -297,7 +338,7 @@ void ImpulseState::Update(float x, float y, bool left_down, bool right_down)
 
 void ImpulseState::Reset()
 {
-    static vec2 zero(0, 0);
+    static vec3 zero(0, 0, 0);
     Delta = zero;
     CurrentPos = zero;
     LastPos = zero;
@@ -319,10 +360,13 @@ VarTextBoxes::VarTextBoxes()
     memset(AdvDissipation, 0, TEXTBUFF_LEN);
     memset(InkAdvDissipation, 0, TEXTBUFF_LEN);
     memset(Vorticity, 0, TEXTBUFF_LEN);
+    memset(Gravity, 0, TEXTBUFF_LEN);
 }
 
 void FormatFloatText(char cstr[TEXTBOX_LEN], float value)
 {
+    // Trim trailing 0s from a float
+
     static regex pattern("^\\d*\\.\\d+?(0*)$", regex_constants::optimize | regex_constants::ECMAScript);
 
     sprintf_s((char*)cstr, TEXTBOX_LEN, "%f", value);
@@ -339,7 +383,21 @@ void FormatFloatText(char cstr[TEXTBOX_LEN], float value)
     }
 }
 
-void VarTextBoxes::SetValues(float gridscale, float viscosity, float ink_viscosity, float vorticity, float splat_radius, float adv_dissipation, float ink_adv_dissipation, float ink_volume)
+void VarTextBoxes::SetValues(SimulationVars& vars)
+{
+    FormatFloatText(GridScale, vars.GridScale);
+    FormatFloatText(Viscosity, vars.Viscosity);
+    FormatFloatText(InkViscosity, vars.InkViscosity);
+    FormatFloatText(Vorticity, vars.Vorticity);
+    FormatFloatText(SplatRadius, vars.SplatRadius);
+    FormatFloatText(AdvDissipation, vars.AdvectionDissipation);
+    FormatFloatText(InkAdvDissipation, vars.InkAdvectionDissipation);
+    FormatFloatText(InkVolume, vars.InkVolume);
+    FormatFloatText(Gravity, vars.Gravity);
+    FormatFloatText(ForceMultiplier, vars.ForceMultiplier);
+}
+
+void VarTextBoxes::SetValues(float gridscale, float viscosity, float ink_viscosity, float vorticity, float splat_radius, float adv_dissipation, float ink_adv_dissipation, float ink_volume, float gravity, float fmult)
 {
     FormatFloatText(GridScale, gridscale);
     FormatFloatText(Viscosity, viscosity);
@@ -349,6 +407,8 @@ void VarTextBoxes::SetValues(float gridscale, float viscosity, float ink_viscosi
     FormatFloatText(AdvDissipation, adv_dissipation);
     FormatFloatText(InkAdvDissipation, ink_adv_dissipation);
     FormatFloatText(InkVolume, ink_volume);
+    FormatFloatText(Gravity, gravity);
+    FormatFloatText(ForceMultiplier, fmult);
 }
 
 void VarTextBoxes::UpdateVars(SimulationVars& vars)
@@ -361,6 +421,8 @@ void VarTextBoxes::UpdateVars(SimulationVars& vars)
     vars.SplatRadius = stof(SplatRadius);
     vars.InkVolume = stof(InkVolume);
     vars.GridScale = stof(GridScale);
+    vars.Gravity = stof(Gravity);
+    vars.ForceMultiplier = stof(ForceMultiplier);
 }
 
 ///////////////////////////
@@ -376,6 +438,8 @@ SimulationVars::SimulationVars()
     , AdvectionDissipation(0.99)
     , InkAdvectionDissipation(0.98)
     , InkVolume(0.007)
+    , Gravity(0)
+    , ForceMultiplier(1.0)
     , SelfAdvect(true)
     , AdvectInk(true)
     , DiffuseVelocity(true)

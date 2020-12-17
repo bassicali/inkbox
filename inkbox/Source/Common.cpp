@@ -1,6 +1,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <cfloat>
 
 #include <glad/glad.h>
 
@@ -42,10 +43,4 @@ void __CheckForGLErrors(const char* file, int line, const char* function)
 
         LOG_ERROR("GL error in %s: %08X (%s:%d): %s", function, code, file, line, message.c_str());
     }
-}
-
-string ReadFile(const char* path)
-{
-    ifstream fin(path);
-    return string((istreambuf_iterator<char>(fin)), istreambuf_iterator<char>());
 }

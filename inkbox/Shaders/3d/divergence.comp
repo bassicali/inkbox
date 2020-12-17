@@ -1,0 +1,32 @@
+#version 430 core
+
+layout(local_size_x=1, local_size_y=1, local_size_z=1) in;
+
+layout(rgba16_snorm)
+uniform image3D field_r;
+
+layout(r16_snorm) 
+uniform image3D field_w;
+
+uniform float gs;
+
+ivec3 clamp_coord(ivec3 coord, ivec3 size)
+{
+    return clamp(coord, ivec3(0, 0, 0), size);
+}
+
+void main()
+{
+    ivec3 coord = ivec3(gl_GlobalInvocationID);
+
+    vec4 left = imageLoad(field_r, clamp_coord(coord + ivec3(-1,0,0), imageSize(field_r)));
+    vec4 right = imageLoad(field_r, clamp_coord(coord + ivec3(1,0,0), imageSize(field_r)));
+    vec4 top = imageLoad(field_r, clamp_coord(coord + ivec3(0,1,0), imageSize(field_r)));
+    vec4 bottom = imageLoad(field_r, clamp_coord(coord + ivec3(0,-1,0), imageSize(field_r)));
+    vec4 front = imageLoad(field_r, clamp_coord(coord + ivec3(0,0,-1), imageSize(field_r)));
+    vec4 back = imageLoad(field_r, clamp_coord(coord + ivec3(0,0,1), imageSize(field_r)));
+    
+    float div = (right.x - left.x)/(2 * gs) + (top.y - bottom.y)/(2 * gs) + (back.z - front.z)/(2 * gs);
+
+    imageStore(field_w, coord, vec4(div, 0, 0, 0));
+}

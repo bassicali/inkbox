@@ -19,12 +19,17 @@
     <ClInclude Include="..\thirdparty\imgui\includes\imstb_rectpack.h" />
     <ClInclude Include="..\thirdparty\imgui\includes\imstb_textedit.h" />
     <ClInclude Include="..\thirdparty\imgui\includes\imstb_truetype.h" />
+    <ClInclude Include="Include\Camera.h" />
     <ClInclude Include="Include\FBO.h" />
     <ClInclude Include="Include\Interface.h" />
     <ClInclude Include="Include\Shader.h" />
     <ClInclude Include="Include\ShaderOp.h" />
-    <ClInclude Include="Include\Simulation.h" />
+    <ClInclude Include="Include\Simulation2D.h" />
     <ClInclude Include="Include\Common.h" />
+    <ClInclude Include="Include\Simulation3D.h" />
+    <ClInclude Include="Include\Tests.h" />
+    <ClInclude Include="Include\Texture.h" />
+    <ClInclude Include="Include\Utils.h" />
     <ClInclude Include="Include\VertexList.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
@@ -36,59 +41,22 @@
     <ClCompile Include="..\thirdparty\imgui\includes\imgui_impl_opengl3.cpp" />
     <ClCompile Include="..\thirdparty\imgui\includes\imgui_widgets.cpp" />
     <ClCompile Include="..\thirdparty\opengl\glad.c" />
+    <ClCompile Include="Source\Camera.cpp" />
     <ClCompile Include="Source\FBO.cpp" />
     <ClCompile Include="Source\Interface.cpp" />
     <ClCompile Include="Source\Main.cpp" />
     <ClCompile Include="Source\Shader.cpp" />
     <ClCompile Include="Source\ShaderOp.cpp" />
-    <ClCompile Include="Source\Simulation.cpp" />
+    <ClCompile Include="Source\Simulation2D.cpp" />
     <ClCompile Include="Source\Common.cpp" />
+    <ClCompile Include="Source\Simulation3D.cpp" />
+    <ClCompile Include="Source\Tests.cpp" />
+    <ClCompile Include="Source\Texture.cpp" />
+    <ClCompile Include="Source\Utils.cpp" />
     <ClCompile Include="Source\VertexList.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="Shaders\add_impulse.f.glsl">
-      <FileType>Document</FileType>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\advection.f.glsl">
-      <FileType>Document</FileType>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\boundary.f.glsl">
-      <FileType>Document</FileType>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\tex_coords.v.glsl">
-      <FileType>Document</FileType>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\divergence.f.glsl">
-      <FileType>Document</FileType>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\gradient.f.glsl">
-      <FileType>Document</FileType>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\jacobi.f.glsl">
-      <FileType>Document</FileType>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\subtract.f.glsl">
-      <FileType>Document</FileType>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\copy.f.glsl">
-      <FileType>Document</FileType>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\scalar_vis.f.glsl">
-      <FileType>Document</FileType>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\vector_vis.f.glsl">
-      <FileType>Document</FileType>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\common.glsl">
-      <FileType>Document</FileType>
-    </CopyFileToFolders>
     <CopyFileToFolders Include="Resources\imgui.ini">
-      <FileType>Document</FileType>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\add_vorticity.f.glsl">
-      <FileType>Document</FileType>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\vorticity.f.glsl">
       <FileType>Document</FileType>
     </CopyFileToFolders>
   </ItemGroup>
@@ -99,8 +67,113 @@
     <Image Include="Resources\swirl.ico" />
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="Shaders\add_radial_impulse.f.glsl">
+    <CopyFileToFolders Include="Shaders\2d\add_impulse.f.glsl">
       <FileType>Document</FileType>
+      <DestinationFolders>$(OutputPath)\2d</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\2d\add_radial_impulse.f.glsl">
+      <FileType>Document</FileType>
+      <DestinationFolders>$(OutputPath)\2d</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\2d\add_vorticity.f.glsl">
+      <FileType>Document</FileType>
+      <DestinationFolders>$(OutputPath)\2d</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\2d\advection.f.glsl">
+      <FileType>Document</FileType>
+      <DestinationFolders>$(OutputPath)\2d</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\2d\boundary.f.glsl">
+      <FileType>Document</FileType>
+      <DestinationFolders>$(OutputPath)\2d</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\2d\common.glsl">
+      <FileType>Document</FileType>
+      <DestinationFolders>$(OutputPath)\2d</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\2d\copy.f.glsl">
+      <FileType>Document</FileType>
+      <DestinationFolders>$(OutputPath)\2d</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\2d\divergence.f.glsl">
+      <FileType>Document</FileType>
+      <DestinationFolders>$(OutputPath)\2d</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\2d\gradient.f.glsl">
+      <FileType>Document</FileType>
+      <DestinationFolders>$(OutputPath)\2d</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\2d\jacobi.f.glsl">
+      <FileType>Document</FileType>
+      <DestinationFolders>$(OutputPath)\2d</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\2d\scalar_vis.f.glsl">
+      <FileType>Document</FileType>
+      <DestinationFolders>$(OutputPath)\2d</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\2d\subtract.f.glsl">
+      <FileType>Document</FileType>
+      <DestinationFolders>$(OutputPath)\2d</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\2d\tex_coords.v.glsl">
+      <FileType>Document</FileType>
+      <DestinationFolders>$(OutputPath)\2d</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\2d\vector_vis.f.glsl">
+      <FileType>Document</FileType>
+      <DestinationFolders>$(OutputPath)\2d</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\2d\vorticity.f.glsl">
+      <FileType>Document</FileType>
+      <DestinationFolders>$(OutputPath)\2d</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\3d\add_impulse.comp">
+      <FileType>Document</FileType>
+      <DestinationFolders>$(OutputPath)\3d</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\3d\tex_coords.vert">
+      <FileType>Document</FileType>
+      <DestinationFolders>$(OutputPath)\3d</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\3d\view.frag">
+      <FileType>Document</FileType>
+      <DestinationFolders>$(OutputPath)\3d</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\3d\advection.comp">
+      <FileType>Document</FileType>
+      <DestinationFolders>$(OutputPath)\3d</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\3d\border.frag">
+      <FileType>Document</FileType>
+      <DestinationFolders>$(OutputPath)\3d</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\3d\divergence.comp">
+      <FileType>Document</FileType>
+      <DestinationFolders>$(OutputPath)\3d</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\3d\gradient.comp">
+      <FileType>Document</FileType>
+      <DestinationFolders>$(OutputPath)\3d</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\3d\subtract.comp">
+      <FileType>Document</FileType>
+      <DestinationFolders>$(OutputPath)\3d</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\3d\copy.comp">
+      <FileType>Document</FileType>
+      <DestinationFolders>$(OutputPath)\3d</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\3d\jacobi.comp">
+      <FileType>Document</FileType>
+      <DestinationFolders>$(OutputPath)\3d</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\3d\boundary.comp">
+      <FileType>Document</FileType>
+      <DestinationFolders>$(OutputPath)\3d</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="Shaders\3d\clear.comp">
+      <FileType>Document</FileType>
+      <DestinationFolders>$(OutputPath)\3d</DestinationFolders>
     </CopyFileToFolders>
   </ItemGroup>
   <PropertyGroup Label="Globals">
