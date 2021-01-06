@@ -40,4 +40,4 @@
 bin/*
 .cmake/**
 
-!opengl/**
+!thirdparty/**

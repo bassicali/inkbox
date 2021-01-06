@@ -1,7 +1,5 @@
 #version 330 core
 
-#include <common.glsl>
-
 precision highp float;
 
 uniform float delta_t;                      // Time step
@@ -19,7 +17,7 @@ void main()
 {
     vec2 u1 = texture2D(velocity, coord).xy;
     vec2 pos0 = coord - delta_t * gs * u1;
-    vec3 u0 = dissipation * bilerp(quantity, pos0, rdv).xyz;
+    vec3 u0 = dissipation * texture2D(quantity, pos0).xyz;
 
     FragColor = vec4(u0, 1.0);
 }
