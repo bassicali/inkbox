@@ -5,6 +5,8 @@
 
 #include "Utils.h"
 
+#define EPSILON 0.0001
+
 using namespace std;
 using namespace glm;
 
@@ -41,6 +43,16 @@ bool utils::IsBetween(float x, float a, float b)
         return x >= b && x <= a;
 
     return false;
+}
+
+bool utils::ApproxEquals(float a, float b)
+{
+    return ApproxEquals(a, b, EPSILON);
+}
+
+bool utils::ApproxEquals(float a, float b, float epsilon)
+{
+    return abs(a - b) <= epsilon;
 }
 
 bool utils::LineIntersectsRect(vec3 lp, vec3 ld, vec3 tl, vec3 tr, vec3 bl, vec3 br, vec3& intersection)
@@ -124,3 +136,31 @@ bool utils::LineIntersectsBox(glm::vec3 lp, glm::vec3 ld, glm::vec3 ttl, glm::ve
 #undef CHECK_AND_RETURN
 }
 
+
+bool utils::StringStartsWith(const string& src, const char* start)
+{
+    string prefix(start);
+    if (prefix.length() > src.length()) return false;
+    return equal(prefix.begin(), prefix.end(), src.begin());
+}
+
+bool utils::StringEndsWith(const string& src, const char* end)
+{
+    string suffix(end);
+    if (suffix.length() > src.length()) return false;
+    return equal(suffix.rbegin(), suffix.rend(), src.rbegin());
+}
+
+
+bool utils::StringEquals(const string& src, const char* other)
+{
+    return src.compare(other) == 0;
+}
+
+int utils::ParseNumericString(const std::string& src)
+{
+    if (StringEndsWith(src, "h"))
+        return stoi(src.substr(0, src.length() - 1), nullptr, 16);
+
+    return stoi(src);
+}

@@ -1,8 +1,10 @@
 
 #include <iostream>
+#include <windows.h>
 
 #include "Simulation2D.h"
 #include "Simulation3D.h"
+#include "IniConfig.h"
 
 #ifndef NDEBUG
 #include "Tests.h"
@@ -10,15 +12,36 @@
 
 using namespace std;
 
-#define WINDOW_WIDTH 500
-#define WINDOW_HEIGHT 500
+#define WINDOW_WIDTH 400
+#define WINDOW_HEIGHT 400
 
 #define UI_WINDOW_WIDTH 750
 #define UI_WINDOW_HEIGHT 395
 
-#define _3D_FIELD_WIDTH 128
-#define _3D_FIELD_HEIGHT 128
-#define _3D_FIELD_DEPTH 128
+#define _3D_FIELD_SIDE 128
+
+once_flag shutdown_flag;
+
+void _AppShutdown()
+{
+    IniConfig::Get().Save();
+}
+
+void _AtExitHandler()
+{
+    call_once(shutdown_flag, _AppShutdown);
+}
+
+BOOL WINAPI _ConsoleCtrlHandler(DWORD type)
+{
+    if (type == CTRL_CLOSE_EVENT)
+    {
+        call_once(shutdown_flag, _AppShutdown);
+        return TRUE;
+    }
+
+    return FALSE;
+}
 
 int main(int argc, char* argv[])
 {
@@ -34,11 +57,18 @@ int main(int argc, char* argv[])
     }
 #endif
 
+    if (SetConsoleCtrlHandler(_ConsoleCtrlHandler, TRUE) == 0)
+    {
+        LOG_WARN("Couldn't register console ctrl handler");
+    }
+
+    atexit(_AtExitHandler);
+
     bool is_3d = false;
     bool run_tests = false;
-    int cube_w = _3D_FIELD_WIDTH;
-    int cube_h = _3D_FIELD_HEIGHT;
-    int cube_d = _3D_FIELD_DEPTH;
+    int cube_w = _3D_FIELD_SIDE;
+    int cube_h = _3D_FIELD_SIDE;
+    int cube_d = _3D_FIELD_SIDE;
 
     if (args.size() >= 1 && args[0].compare("3d") == 0)
     {
@@ -60,6 +90,11 @@ int main(int argc, char* argv[])
 
     try
     {
+        if (is_3d)
+            IniConfig::Get().UseSnormTextures = true;
+
+        IniConfig::Get().Print();
+
         int ctrl_h = UI_WINDOW_HEIGHT;
         int ctrl_w = UI_WINDOW_WIDTH;
         ctrl_w -= is_3d ? 343 : 0;

@@ -23,7 +23,7 @@ enum class ShaderType
 class GLShader
 {
 public:
-    GLShader(const char* path, ShaderType type, glm::uvec3 compute_local_size = glm::uvec3());
+    GLShader(const char* path, ShaderType type, glm::uvec3 compute_local_size = glm::uvec3(), std::string overrideImageFormat = std::string());
     bool Compile();
     void Discard();
     int Id() const { return id; }
@@ -37,6 +37,7 @@ private:
     std::string sourceFile;
     std::string fileName;
     std::string sourceCode; // processed
+    std::string overrideImgFmt;
     int id;
     ShaderType type;
     glm::uvec3 computeShaderLocalSize;

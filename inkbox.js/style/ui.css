@@ -1,0 +1,25 @@
+
+body {
+    color: rgb(247, 249, 249);
+    background-color: hsl(275, 59%, 70%);
+    font-size: smaller;
+}
+
+button {
+    background-color: hsl(275, 59%, 40%) !important;
+    border-color: hsl(275, 59%, 20%) !important;
+}
+
+canvas {
+    border: none;
+}
+
+.sim-var {
+    width: 7em; 
+}
+
+.align-end {
+    text-align: end;
+    padding-left: 1em;
+    padding-top: 0.25em;
+}

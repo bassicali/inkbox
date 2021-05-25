@@ -20,6 +20,7 @@
     <ClInclude Include="..\thirdparty\imgui\includes\imstb_textedit.h" />
     <ClInclude Include="..\thirdparty\imgui\includes\imstb_truetype.h" />
     <ClInclude Include="Include\Camera.h" />
+    <ClInclude Include="Include\IniConfig.h" />
     <ClInclude Include="Include\FBO.h" />
     <ClInclude Include="Include\Interface.h" />
     <ClInclude Include="Include\Shader.h" />
@@ -42,6 +43,7 @@
     <ClCompile Include="..\thirdparty\imgui\includes\imgui_widgets.cpp" />
     <ClCompile Include="..\thirdparty\opengl\glad.c" />
     <ClCompile Include="Source\Camera.cpp" />
+    <ClCompile Include="Source\IniConfig.cpp" />
     <ClCompile Include="Source\FBO.cpp" />
     <ClCompile Include="Source\Interface.cpp" />
     <ClCompile Include="Source\Main.cpp" />

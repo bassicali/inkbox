@@ -2,6 +2,7 @@
 
 #include "Texture.h"
 #include "Common.h"
+#include "IniConfig.h"
 
 #include <exception>
 
@@ -20,24 +21,28 @@ Texture::Texture()
 
 Texture::Texture(int width, int height, int depth, int channels)
 {
+	bool snorm = IniConfig::Get().UseSnormTextures;
+	int component_width = IniConfig::Get().TextureComponentWidth;
+
 	if (channels == 4)
 	{
 		format = GL_RGBA;
-		internalFormat = GL_RGBA16_SNORM;
+		internalFormat = snorm ? GL_RGBA16_SNORM : (component_width == 32 ? GL_RGBA32F : GL_RGBA16F);
 	}
 	else if (channels == 3)
 	{
 		format = GL_RGB;
-		internalFormat = GL_RGB16_SNORM;
+		internalFormat = snorm ? GL_RGB16_SNORM : (component_width == 32 ? GL_RGB32F : GL_RGB16F);
 	}
 	else if (channels == 2)
 	{
 		format = GL_RG;
-		internalFormat = GL_RG16_SNORM;
+		internalFormat = snorm ? GL_RG16_SNORM : (component_width == 32 ? GL_RG32F : GL_RG16F);
 	}
 	else
 	{
-		throw exception("Invalid channel count");
+		format = GL_RED;
+		internalFormat = snorm ? GL_R16_SNORM : (component_width == 32 ? GL_R32F : GL_R16F);
 	}
 
 	if (!Init(width, height, depth, format, GL_FLOAT, internalFormat))
@@ -54,7 +59,7 @@ Texture::~Texture()
 
 Texture::Texture(int width, int height, int depth, int format, int type, int internalformat)
 {
-	if (!Init(width, height, depth, format, type, internalFormat))
+	if (!Init(width, height, depth, format, type, internalformat))
 		throw exception("Failed to create texture");
 }
 

@@ -54,16 +54,16 @@ bool InkBox2DSimulation::CreateScene()
         -c.x, -c.y, 0.0f,   // top left 
     };
 
-    unsigned int top[] = { 3,0 };
+    unsigned int top[] = { 3, 0 };
     borderT.Init(&outer_vertices[0], 12, top, 2);
 
-    unsigned int bottom[] = { 1,2 };
+    unsigned int bottom[] = { 1, 2 };
     borderB.Init(&outer_vertices[0], 12, bottom, 2);
 
-    unsigned int left[] = { 2,3 };
+    unsigned int left[] = { 2, 3 };
     borderL.Init(&outer_vertices[0], 12, left, 2);
 
-    unsigned int right[] = { 0,1 };
+    unsigned int right[] = { 0, 1 };
     borderR.Init(&outer_vertices[0], 12, right, 2);
 
 

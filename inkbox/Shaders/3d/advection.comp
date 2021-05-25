@@ -1,5 +1,7 @@
 #version 430
 
+#define SPEED_THRESHOLD 0.0001
+
 layout(local_size_x=1, local_size_y=1, local_size_z=1) in;
 
 layout(rgba16_snorm) 
@@ -20,7 +22,7 @@ uniform float gravity;
 
 vec3 grid_clamp(vec3 v)
 {
-    return sign(v) * max(vec3(1,1,1), abs(round(v)));
+    return sign(v) * step(SPEED_THRESHOLD, abs(v));
 }
 
 ivec3 clamp_coord(ivec3 coord, ivec3 size)

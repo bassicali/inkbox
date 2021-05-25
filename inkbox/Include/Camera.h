@@ -16,6 +16,8 @@ public:
 	void Pan(glm::vec2 offset);
 
 	glm::vec3 Position() const { return position; }
+	void Position(float x, float y, float z) { position = glm::vec3(x, y, z); }
+	void Position(glm::vec3 pos) { position = pos; }
 	glm::vec3 Direction() const { return direction; }
 	glm::mat4 ViewMatrix() const { return view; }
 
@@ -24,6 +26,6 @@ private:
 	glm::vec3 direction;
 	glm::vec3 right;
 	glm::vec3 up;
-	glm::vec3 worldUp;
+	glm::vec3 refUp;
 	glm::mat4 view;
 };

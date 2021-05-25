@@ -121,34 +121,3 @@ DEFN_TEST(Line_Intersects_Box_Shoot_From_Left)
 	return intersects == true && i.x == -0.5 && i.y == 0.25 && i.z == 0;
 }
 
-vec3 RotateVec3(const vec3& v, mat4& matrix)
-{
-	vec4 v4(v.x, v.y, v.z, 0.f);
-	v4 = matrix * v4;
-	
-	return vec3(v4.x, v4.y, v4.z);
-}
-
-DEFN_TEST(Line_Intersects_Rotated_Box)
-{
-	vec3 lo = vec3(-5, 0.25, 0);
-	vec3 ld = normalize(vec3(-4, 0.25, 0) - lo);
-
-	mat4 rot(1.0);
-	rot = rotate(rot, 30.0f, vec3(1, 0, 0));
-
-	vec3 ttl = RotateVec3(vec3(-0.5, 0.5, 0.5), rot);
-	vec3 ttr = RotateVec3(vec3(0.5, 0.5, 0.5), rot);
-	vec3 tbl = RotateVec3(vec3(-0.5, 0.5, -0.5), rot);
-	vec3 tbr = RotateVec3(vec3(0.5, 0.5, -0.5), rot);
-
-	vec3 btl = RotateVec3(vec3(-0.5, -0.5, 0.5), rot);
-	vec3 btr = RotateVec3(vec3(0.5, -0.5, 0.5), rot);
-	vec3 bbl = RotateVec3(vec3(-0.5, -0.5, -0.5), rot);
-	vec3 bbr = RotateVec3(vec3(0.5, -0.5, -0.5), rot);
-
-	vec3 i;
-	bool intersects = LineIntersectsBox(lo, ld, ttl, ttr, tbl, tbr, btl, btr, bbl, bbr, i);
-
-	return intersects == true && i.x == -0.5 && i.y == 0.25 && i.z == 0;
-}

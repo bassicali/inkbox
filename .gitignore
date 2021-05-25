@@ -41,3 +41,4 @@ bin/*
 .cmake/**
 
 !thirdparty/**
+/inkbox.js/embed-shaders.ps1

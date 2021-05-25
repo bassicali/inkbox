@@ -91,6 +91,9 @@
     <ClInclude Include="Include\Utils.h">
       <Filter>Include</Filter>
     </ClInclude>
+    <ClInclude Include="Include\IniConfig.h">
+      <Filter>Include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Main.cpp">
@@ -144,13 +147,16 @@
     <ClCompile Include="Source\Texture.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Source\VertexList.cpp">
-      <Filter>ThirdParty\Include</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Tests.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="Source\Utils.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\IniConfig.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\VertexList.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

@@ -10,6 +10,7 @@
 
 #include "Simulation3D.h"
 #include "Utils.h"
+#include "IniConfig.h"
 
 using namespace std;
 using namespace glm;
@@ -67,7 +68,13 @@ void PrintVec4(vec4 vec)
 
 bool _InitComputeShader(const char* file, GLComputeShader& program, uvec3 local_size)
 {
-    GLShader cs(file, ShaderType::Compute, local_size);
+    string img_format;
+    if (!IniConfig::Get().UseSnormTextures)
+    {
+        img_format = "rgba32f";
+    }
+    GLShader cs(file, ShaderType::Compute, local_size, img_format);
+
     if (!cs.Compile())
         return false;
 
@@ -377,7 +384,7 @@ void InkBox3DSimulation::SolvePoissonSystem(SwapTexture& swap, Texture& initial_
     jacobiShader.SetFloat("beta", beta);
     jacobiShader.SetImage("fieldb_r", textures.Temp, 0, GL_READ_ONLY);
 
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < IniConfig::Get().NumJacobiIterations; i++)
     {
         jacobiShader.SetImage("fieldx_r", swap.Front(), 1, GL_READ_ONLY);
         jacobiShader.SetImage("field_out", swap.Back(), 2, GL_WRITE_ONLY);
@@ -443,7 +450,7 @@ void InkBox3DSimulation::TickDropletsMode()
         if ((rand() & 0x1) == 0x1)
         {
             rand_pos.x = rand() % width;
-            rand_pos.y = height;
+            rand_pos.y = height / 2;
             rand_pos.z = rand() % depth;
 
             rand_force.x = 0; 
@@ -452,7 +459,7 @@ void InkBox3DSimulation::TickDropletsMode()
         }
         else
         {
-            rand_pos.x = width;
+            rand_pos.x = width / 2;
             rand_pos.z = rand() % depth;
             rand_pos.y = rand() % height;
 
@@ -516,7 +523,7 @@ void InkBox3DSimulation::ProcessInputs()
 
     if (scrollAcc != 0)
     {
-        camera.Move(scrollAcc);
+        camera.Move(scrollAcc * IniConfig::Get().ScrollSensitivity);
         scrollAcc = 0;
         camera_changed = true;
     }
@@ -540,14 +547,14 @@ void InkBox3DSimulation::ProcessInputs()
         {
             if (orbit_mode)
             {
-                // TODO: OrbitY flips the view matrix when direction is parallel to worldup
-                camera.OrbitY(0.06 * (xpos - x), vec3(0, 0, 0));
-                camera.OrbitX(0.06 * (ypos - y), vec3(0, 0, 0));
+                float sensitivity = IniConfig::Get().MouseOrbitSensitivity;
+                camera.OrbitY(sensitivity * (xpos - x), vec3(0, 0, 0));
+                camera.OrbitX(sensitivity * (ypos - y), vec3(0, 0, 0));
             }
             else
             {
                 // fly mode
-                camera.Pan(vec2(xpos - x, y - ypos));
+                camera.Pan(vec2(xpos - x, y - ypos) * 0.01f);
             }
 
             xpos = x;
@@ -559,15 +566,46 @@ void InkBox3DSimulation::ProcessInputs()
     {
         left_mouse_down = false;
     }
-    
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
-        UpdatePickCoord();
+
+    if (orbit_mode)
+    {
+        float sensitivity = IniConfig::Get().KeyOrbitSensitivity;
+
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        {
+            camera.Position(0, camera.Position().y, camera.Position().z);
+            camera.OrbitX(sensitivity, vec3(0, 0, 0));
+        }
+        else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        {
+            camera.Position(0, camera.Position().y, camera.Position().z);
+            camera.OrbitX(-sensitivity, vec3(0, 0, 0));
+        }
+        else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        {
+            camera.Position(camera.Position().x, 0, camera.Position().z);
+            camera.OrbitY(-sensitivity, vec3(0, 0, 0));
+        }
+        else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        {
+            camera.Position(camera.Position().x, 0, camera.Position().z);
+            camera.OrbitY(sensitivity, vec3(0, 0, 0));
+        }
+
+        camera_changed = true;
+    }
 
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
     {
         camera.LookAt(vec3(0, 0, 0));
         camera_changed = true;
     }
+
+    if (camera_changed)
+        invProjView = inverse(projection * camera.ViewMatrix());
+    
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+        UpdatePickCoord();
 
     if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS)
     {
@@ -578,11 +616,6 @@ void InkBox3DSimulation::ProcessInputs()
     {
         orbit_mode = false;
         LOG_INFO("Fly mode");
-    }
-
-    if (camera_changed)
-    {
-        invProjView = inverse(projection * camera.ViewMatrix());
     }
 
 #if MEASURE_CS_TIMES

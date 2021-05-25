@@ -17,6 +17,7 @@ using namespace std;
 
 regex re_include("^[ \\t]*#include[ \\t]+[<\"]([\\.\\w]+?)[>\"][ \\t]*$", regex_constants::optimize | regex_constants::ECMAScript);
 regex re_local_size_decl("^[ \\t]*layout[ \\t]*\\([ \\t]*local_size_.*$", regex_constants::optimize | regex_constants::ECMAScript);
+regex re_image_format("^[ \\t]*layout[ \\t]*\\([ \\t]*r[a-z0-9_]+.*$", regex_constants::optimize | regex_constants::ECMAScript);
 
 
 ///////////////////////////
@@ -203,16 +204,22 @@ bool GLShaderProgram::Validate()
 ////////////////////////////
 ///        GLShader      ///
 ////////////////////////////
-GLShader::GLShader(const char* path, ShaderType shader_type, glm::uvec3 compute_local_size)
+GLShader::GLShader(const char* path, ShaderType shader_type, glm::uvec3 compute_local_size, std::string overrideImageFormat)
 	: id(0)
 	, type(shader_type)
 	, computeShaderLocalSize(compute_local_size)
+	, overrideImgFmt(overrideImageFormat)
 {
 	namespace fs = std::filesystem;
 
 	if (shader_type != ShaderType::Compute && (computeShaderLocalSize.x != 0 || computeShaderLocalSize.y != 0 || computeShaderLocalSize.z != 0))
 	{
 		throw exception("Local size values are only valid for compute shaders");
+	}
+
+	if (!filesystem::exists(path))
+	{
+		throw exception("Shader file not found");
 	}
 
 	sourceFile = string(path);
@@ -251,6 +258,11 @@ string GLShader::ProcessSourceCode(std::string file)
 					<< endl;
 				//LOG_INFO("Injected custom local size into compute shader %s: (x=%d, y=%d, z=%d)", file.c_str(), computeShaderLocalSize.x, computeShaderLocalSize.y, computeShaderLocalSize.z);
 			}
+		}
+		else if (overrideImgFmt.length() > 0 && regex_match(ln, match, re_image_format))
+		{
+			processed << "layout(" << overrideImgFmt << ")" << endl;
+			LOG_INFO("Injected custom image format into shader %s: %s", file.c_str(), overrideImgFmt.c_str());
 		}
 		else
 		{

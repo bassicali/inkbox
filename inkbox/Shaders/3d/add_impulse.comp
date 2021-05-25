@@ -5,7 +5,7 @@ layout(local_size_x=1, local_size_y=1, local_size_z=1) in;
 layout(rgba16_snorm) 
 uniform image3D field_r;
 
-layout(rgba16_snorm) 
+layout(rgba16_snorm)
 uniform image3D field_w;
 
 uniform vec3 position;
@@ -19,7 +19,7 @@ void impulse_point(ivec3 coord)
     vec4 effect = force * exp(x);
 
     vec4 u0 = imageLoad(field_r, coord);
-    vec4 summed = clamp(u0 + effect, -1, 1);
+    vec4 summed = u0 + effect;
     imageStore(field_w, coord, summed);
 }
 
