@@ -227,23 +227,23 @@ bool InkBox2DSimulation::CreateShaderOps()
 {
 #define ADD_SHADER(obj,file) { GLShader fs(file, ShaderType::Fragment); if (!_AddFragShader(obj, vs, fs)) return false; obj.Use(); obj.SetVec2("stride", rdv); }
 
-    GLShader vs("2d\\tex_coords.v.glsl", ShaderType::Vertex);
+    GLShader vs("2d\\tex_coords.vert", ShaderType::Vertex);
     if (!vs.Compile())
         return false;
 
-    ADD_SHADER(impulseShader,       "2d\\add_impulse.f.glsl")
-    ADD_SHADER(radialImpulseShader, "2d\\add_radial_impulse.f.glsl")
-    ADD_SHADER(advectionShader,     "2d\\advection.f.glsl")
-    ADD_SHADER(jacobiShader,        "2d\\jacobi.f.glsl")
-    ADD_SHADER(divShader,           "2d\\divergence.f.glsl")
-    ADD_SHADER(gradShader,          "2d\\gradient.f.glsl")
-    ADD_SHADER(subtractShader,      "2d\\subtract.f.glsl")
-    ADD_SHADER(boundaryShader,      "2d\\boundary.f.glsl")
-    ADD_SHADER(vorticityShader,     "2d\\vorticity.f.glsl")
-    ADD_SHADER(addVorticityShader,  "2d\\add_vorticity.f.glsl")
-    ADD_SHADER(vectorVisShader,     "2d\\vector_vis.f.glsl")
-    ADD_SHADER(scalarVisShader,     "2d\\scalar_vis.f.glsl")
-    ADD_SHADER(copyShader,          "2d\\copy.f.glsl")
+    ADD_SHADER(impulseShader,       "2d\\add_impulse.frag")
+    ADD_SHADER(radialImpulseShader, "2d\\add_radial_impulse.frag")
+    ADD_SHADER(advectionShader,     "2d\\advection.frag")
+    ADD_SHADER(jacobiShader,        "2d\\jacobi.frag")
+    ADD_SHADER(divShader,           "2d\\divergence.frag")
+    ADD_SHADER(gradShader,          "2d\\gradient.frag")
+    ADD_SHADER(subtractShader,      "2d\\subtract.frag")
+    ADD_SHADER(boundaryShader,      "2d\\boundary.frag")
+    ADD_SHADER(vorticityShader,     "2d\\vorticity.frag")
+    ADD_SHADER(addVorticityShader,  "2d\\add_vorticity.frag")
+    ADD_SHADER(vectorVisShader,     "2d\\vector_vis.frag")
+    ADD_SHADER(scalarVisShader,     "2d\\scalar_vis.frag")
+    ADD_SHADER(copyShader,          "2d\\copy.frag")
 
     impulse.SetShader(&impulseShader);
     impulse.SetQuad(&quad);

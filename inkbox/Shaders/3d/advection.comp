@@ -31,7 +31,6 @@ ivec3 clamp_coord(ivec3 coord, ivec3 size)
 void advect_point(ivec3 coord)
 {
     vec3 u1 = imageLoad(velocity, coord).xyz;
-    //u1 += vec3(0, -gravity, 0);
 
     vec3 delta = delta_t * gs * u1;
     ivec3 pos0 = clamp_coord(ivec3(coord - grid_clamp(delta)), imageSize(quantity_r));

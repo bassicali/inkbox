@@ -67,23 +67,23 @@
     <Image Include="Resources\swirl.ico" />
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="Shaders\2d\add_impulse.f.glsl">
+    <CopyFileToFolders Include="Shaders\2d\add_impulse.frag">
       <FileType>Document</FileType>
       <DestinationFolders>$(OutputPath)\2d</DestinationFolders>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\2d\add_radial_impulse.f.glsl">
+    <CopyFileToFolders Include="Shaders\2d\add_radial_impulse.frag">
       <FileType>Document</FileType>
       <DestinationFolders>$(OutputPath)\2d</DestinationFolders>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\2d\add_vorticity.f.glsl">
+    <CopyFileToFolders Include="Shaders\2d\add_vorticity.frag">
       <FileType>Document</FileType>
       <DestinationFolders>$(OutputPath)\2d</DestinationFolders>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\2d\advection.f.glsl">
+    <CopyFileToFolders Include="Shaders\2d\advection.frag">
       <FileType>Document</FileType>
       <DestinationFolders>$(OutputPath)\2d</DestinationFolders>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\2d\boundary.f.glsl">
+    <CopyFileToFolders Include="Shaders\2d\boundary.frag">
       <FileType>Document</FileType>
       <DestinationFolders>$(OutputPath)\2d</DestinationFolders>
     </CopyFileToFolders>
@@ -91,39 +91,39 @@
       <FileType>Document</FileType>
       <DestinationFolders>$(OutputPath)\2d</DestinationFolders>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\2d\copy.f.glsl">
+    <CopyFileToFolders Include="Shaders\2d\copy.frag">
       <FileType>Document</FileType>
       <DestinationFolders>$(OutputPath)\2d</DestinationFolders>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\2d\divergence.f.glsl">
+    <CopyFileToFolders Include="Shaders\2d\divergence.frag">
       <FileType>Document</FileType>
       <DestinationFolders>$(OutputPath)\2d</DestinationFolders>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\2d\gradient.f.glsl">
+    <CopyFileToFolders Include="Shaders\2d\gradient.frag">
       <FileType>Document</FileType>
       <DestinationFolders>$(OutputPath)\2d</DestinationFolders>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\2d\jacobi.f.glsl">
+    <CopyFileToFolders Include="Shaders\2d\jacobi.frag">
       <FileType>Document</FileType>
       <DestinationFolders>$(OutputPath)\2d</DestinationFolders>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\2d\scalar_vis.f.glsl">
+    <CopyFileToFolders Include="Shaders\2d\scalar_vis.frag">
       <FileType>Document</FileType>
       <DestinationFolders>$(OutputPath)\2d</DestinationFolders>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\2d\subtract.f.glsl">
+    <CopyFileToFolders Include="Shaders\2d\subtract.frag">
       <FileType>Document</FileType>
       <DestinationFolders>$(OutputPath)\2d</DestinationFolders>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\2d\tex_coords.v.glsl">
+    <CopyFileToFolders Include="Shaders\2d\tex_coords.vert">
       <FileType>Document</FileType>
       <DestinationFolders>$(OutputPath)\2d</DestinationFolders>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\2d\vector_vis.f.glsl">
+    <CopyFileToFolders Include="Shaders\2d\vector_vis.frag">
       <FileType>Document</FileType>
       <DestinationFolders>$(OutputPath)\2d</DestinationFolders>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\2d\vorticity.f.glsl">
+    <CopyFileToFolders Include="Shaders\2d\vorticity.frag">
       <FileType>Document</FileType>
       <DestinationFolders>$(OutputPath)\2d</DestinationFolders>
     </CopyFileToFolders>

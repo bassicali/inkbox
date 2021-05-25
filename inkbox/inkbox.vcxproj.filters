@@ -158,49 +158,49 @@
     <CopyFileToFolders Include="Resources\imgui.ini">
       <Filter>Resources</Filter>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\2d\add_impulse.f.glsl">
+    <CopyFileToFolders Include="Shaders\2d\add_impulse.frag">
       <Filter>Shaders\2d</Filter>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\2d\add_radial_impulse.f.glsl">
+    <CopyFileToFolders Include="Shaders\2d\add_radial_impulse.frag">
       <Filter>Shaders\2d</Filter>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\2d\add_vorticity.f.glsl">
+    <CopyFileToFolders Include="Shaders\2d\add_vorticity.frag">
       <Filter>Shaders\2d</Filter>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\2d\advection.f.glsl">
+    <CopyFileToFolders Include="Shaders\2d\advection.frag">
       <Filter>Shaders\2d</Filter>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\2d\boundary.f.glsl">
+    <CopyFileToFolders Include="Shaders\2d\boundary.frag">
       <Filter>Shaders\2d</Filter>
     </CopyFileToFolders>
     <CopyFileToFolders Include="Shaders\2d\common.glsl">
       <Filter>Shaders\2d</Filter>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\2d\copy.f.glsl">
+    <CopyFileToFolders Include="Shaders\2d\copy.frag">
       <Filter>Shaders\2d</Filter>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\2d\divergence.f.glsl">
+    <CopyFileToFolders Include="Shaders\2d\divergence.frag">
       <Filter>Shaders\2d</Filter>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\2d\gradient.f.glsl">
+    <CopyFileToFolders Include="Shaders\2d\gradient.frag">
       <Filter>Shaders\2d</Filter>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\2d\jacobi.f.glsl">
+    <CopyFileToFolders Include="Shaders\2d\jacobi.frag">
       <Filter>Shaders\2d</Filter>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\2d\scalar_vis.f.glsl">
+    <CopyFileToFolders Include="Shaders\2d\scalar_vis.frag">
       <Filter>Shaders\2d</Filter>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\2d\subtract.f.glsl">
+    <CopyFileToFolders Include="Shaders\2d\subtract.frag">
       <Filter>Shaders\2d</Filter>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\2d\tex_coords.v.glsl">
+    <CopyFileToFolders Include="Shaders\2d\tex_coords.vert">
       <Filter>Shaders\2d</Filter>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\2d\vector_vis.f.glsl">
+    <CopyFileToFolders Include="Shaders\2d\vector_vis.frag">
       <Filter>Shaders\2d</Filter>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="Shaders\2d\vorticity.f.glsl">
+    <CopyFileToFolders Include="Shaders\2d\vorticity.frag">
       <Filter>Shaders\2d</Filter>
     </CopyFileToFolders>
     <CopyFileToFolders Include="Shaders\3d\add_impulse.comp">
