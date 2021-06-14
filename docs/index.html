@@ -1,0 +1,125 @@
+
+<html>
+
+<head>
+    <link rel="stylesheet" href="../inkbox.js/style/bootstrap.css" />
+    <link rel="stylesheet" href="../inkbox.js/style/ui.css" />
+    <script src="../inkbox.js/js/sim.js"></script>
+</head>
+
+
+<body>
+    <div style="display: flex; flex-direction: column; justify-content: start;">
+        <div class="mx-auto mt-3">
+            <center><h2 class="heading">i n k b o x</h2></center>
+            <canvas id="mainCanvas" width="400" height="400"></canvas>
+            <div class="">
+                <span style="font-size: small" id="fpsText">FPS: 60 Hz</span>
+            </div>
+        </div>
+
+        <div class="mx-auto mt-2">
+            <input type="radio" id="rdInk" name="displayField">
+            <label for="rdInk" style="padding-right: 1em;">Ink</label>
+
+            <input type="radio" id="rdVelocity" name="displayField">
+            <label for="rdVelocity" style="padding-right: 1em;">Velocity</label>
+
+            <input type="radio" id="rdPressure" name="displayField">
+            <label for="rdPressure" style="padding-right: 1em;">Pressure</label>
+
+            <input type="radio" id="rdVorticity" name="displayField">
+            <label for="rdVorticity" style="padding-right: 1em;">Vorticity</label>
+        </div>
+        <div class="mx-auto mt-4">
+            <table class="my-2" style="border: 0; font-size: small;">
+                <tr>
+                    <td class="align-end">
+                        <label>Self Advection</label>
+                        <input type="checkbox" id="chkSelfAdvect" />
+                    </td>
+
+                    <td class="align-end">
+                        <label>Ink Advection</label>
+                        <input type="checkbox" id="chkInkAdvect" />
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="align-end">
+                        <label>Diffusion</label>
+                        <input type="checkbox" id="chkDiffuse" />
+                    </td>
+                    <td class="align-end">
+                        <label>Ink Diffusion</label>
+                        <input type="checkbox" id="chkInkDiffuse" />
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="align-end">
+                        <label>Vorticity</label>
+                        <input type="checkbox" id="chkVorticity" />
+                    </td>
+                    <td class="align-end">
+                        <label>Boundary Conditions</label>
+                        <input type="checkbox" id="chkBoundaries" />
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="align-end">
+                        <label>Grid Scale</label>
+                        <input class="sim-var" type="text" id="txtGridScale" />
+                    </td>
+                    <td class="align-end">
+                        <label>Vorticity</label>
+                        <input class="sim-var" type="text" id="txtVorticity" />
+                    </td>
+                </tr>
+                <tr>
+                    <td class="align-end">
+                        <label>Viscosity</label>
+                        <input class="sim-var" type="text" id="txtViscosity" />
+                    </td>
+                    <td class="align-end">
+                        <label>Ink Viscosity</label>
+                        <input class="sim-var" type="text" id="txtInkViscosity" />
+                    </td>
+                </tr>
+                <tr>
+                    <td class="align-end">
+                        <label>Dissipation</label>
+                        <input class="sim-var" type="text" id="txtDissipation" />
+                    </td>
+                    <td class="align-end">
+                        <label>Ink Dissipation</label>
+                        <input class="sim-var" type="text" id="txtInkDissipation" />
+                    </td>
+                </tr>
+                <tr>
+                    <td class="align-end">
+                        <label>Force Radius</label>
+                        <input class="sim-var" type="text" id="txtRadius" />
+                    </td>
+                    <td class="align-end">
+                        <label>Ink Volume</label>
+                        <input class="sim-var" type="text" id="txtVolume" />
+                    </td>
+                </tr>
+
+                <tr>
+                    <td style="padding-top: 1em;">
+                        <button type="button" class="btn btn-sm btn-primary" id="btnUpdate">Update</button>
+                        <button type="button" class="btn btn-sm btn-primary" id="btnClear">Clear</button>
+                        <button type="button" class="btn btn-sm btn-primary" id="btnPause">Pause</button>
+                    </td>
+                    <td style="padding-top: 1em;">
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</body>
+
+</html>
