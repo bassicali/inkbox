@@ -5,25 +5,25 @@ VisualStudioVersion = 16.0.30503.244
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "inkbox", "inkbox\inkbox.vcxproj", "{68ACE380-7170-4FBF-8FB6-F6BF59DD2BDC}"
 EndProject
-Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "inkbox.js", "inkbox.js\", "{B55E8666-D7E9-4A1B-9BA8-F20397ADB3EE}"
+Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "inkbox.js", "docs\", "{B55E8666-D7E9-4A1B-9BA8-F20397ADB3EE}"
 	ProjectSection(WebsiteProperties) = preProject
 		TargetFrameworkMoniker = ".NETFramework,Version%3Dv4.0"
 		Debug.AspNetCompiler.VirtualPath = "/localhost_57743"
-		Debug.AspNetCompiler.PhysicalPath = "inkbox.js\"
+		Debug.AspNetCompiler.PhysicalPath = "docs\"
 		Debug.AspNetCompiler.TargetPath = "PrecompiledWeb\localhost_57743\"
 		Debug.AspNetCompiler.Updateable = "true"
 		Debug.AspNetCompiler.ForceOverwrite = "true"
 		Debug.AspNetCompiler.FixedNames = "false"
 		Debug.AspNetCompiler.Debug = "True"
 		Release.AspNetCompiler.VirtualPath = "/localhost_57743"
-		Release.AspNetCompiler.PhysicalPath = "inkbox.js\"
+		Release.AspNetCompiler.PhysicalPath = "docs\"
 		Release.AspNetCompiler.TargetPath = "PrecompiledWeb\localhost_57743\"
 		Release.AspNetCompiler.Updateable = "true"
 		Release.AspNetCompiler.ForceOverwrite = "true"
 		Release.AspNetCompiler.FixedNames = "false"
 		Release.AspNetCompiler.Debug = "False"
 		VWDPort = "57743"
-		SlnRelativePath = "inkbox.js\"
+		SlnRelativePath = "docs\"
 	EndProjectSection
 EndProject
 Global

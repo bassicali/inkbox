@@ -10,12 +10,18 @@ button {
     border-color: hsl(275, 59%, 20%) !important;
 }
 
+.btn-theme {
+    color: #fff;
+    background-color: hsl(275, 59%, 40%) !important;
+    border-color: hsl(275, 59%, 20%) !important;
+}
+
 canvas {
     border: none;
 }
 
 .sim-var {
-    width: 7em; 
+    width: 4em;
 }
 
 .align-end {

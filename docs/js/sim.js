@@ -3,6 +3,12 @@
 
 var gl = null;
 
+var env = {
+    textureType: null,
+    supportsLinearSampling: false,
+    filtering: null
+}
+
 var sim = {
     canvas: null,
     context: null,
@@ -27,6 +33,7 @@ var impulse = {
 }
 
 window.onload = init;
+window.addEventListener('error', (e) => { alert("Error: " + e.message) });
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -36,9 +43,10 @@ class FBO {
         gl.bindTexture(gl.TEXTURE_2D, this.texture);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, width, height, 0, gl.RGB, gl.FLOAT, null);
+
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, env.filtering);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, env.filtering);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, width, height, 0, gl.RGB, env.textureType, null);
 
         this.buffer = gl.createFramebuffer();
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.buffer);
@@ -219,23 +227,40 @@ function init() {
     sim.context = sim.canvas.getContext('webgl');
 
     if (sim.context == null) {
-        console.error('Unable to initialize WebGL. Your browser or machine may not support it.');
+        alert('Unable to initialize WebGL. Your browser or device may not support it.');
         return;
     }
 
     gl = sim.context;
 
-    let ext = gl.getExtension('OES_texture_float');
-    if (ext == null) {
-        console.error('OES_texture_float extension not supported');
-        return;
+    let isMobile = /Android|webOS|iPhone|iPad|Mac|Macintosh|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    // On my iphone this extension is supported but trying to render to it doesn't work
+    if (!isMobile) {
+        let fullFloatExt = gl.getExtension('OES_texture_float');
+        if (fullFloatExt != null) {
+            env.textureType = gl.FLOAT;
+
+            let linearFilteringExt = gl.getExtension('OES_texture_float_linear');
+            if (linearFilteringExt != null) {
+                env.supportsLinearSampling = true;
+            }
+        }
     }
 
-    ext = gl.getExtension('OES_texture_float_linear');
-    if (ext == null) {
-        console.error('OES_texture_float_linear extension not supported');
-        return;
+    if (env.textureType == null) {
+        let halfFloatExt = gl.getExtension('OES_texture_half_float');
+        if (halfFloatExt != null) {
+            env.textureType = halfFloatExt.HALF_FLOAT_OES;
+
+            let linearFilteringExt = gl.getExtension('OES_texture_half_float_linear');
+            if (linearFilteringExt != null) {
+                env.supportsLinearSampling = true;
+            }
+        }
     }
+
+    env.filtering = env.supportsLinearSampling ? gl.LINEAR : gl.NEAREST;
 
     sim.fpsDisplay = document.getElementById('fpsText');
 
@@ -250,11 +275,12 @@ function init() {
 
     sim.quad = new VertexList(quadVerts, [0, 1, 3, 1, 2, 3]);
 
-    c = new Vec3(1 - 0.5 / w, 1 - 0.5 / h);
+    c = new Vec3(1 - 0.5/w, 1 - 0.5/h);
     let borderVerts = [c.x, -c.y,
                        c.x,  c.y,
                       -c.x,  c.y,
                       -c.x, -c.y];
+
     sim.borders = {
         top: new VertexList(borderVerts, [3, 0]),
         bottom: new VertexList(borderVerts, [1, 2]),
@@ -323,42 +349,67 @@ function init() {
     }
     fillParamInputs(sim.params);
 
-    sim.canvas.addEventListener('mousedown', e => {
-        if (!impulse.forceActive && !impulse.inkActive) {
-            impulse.forceActive = true;
-            impulse.inkActive = true;
-            impulse.currentPos = new Vec2(e.offsetX, sim.canvas.height - e.offsetY);
-            impulse.lastPos = impulse.currentPos;
-            impulse.delta = new Vec2(0, 0);
-        }
-    });
+    sim.canvas.addEventListener('mousedown', e => mouseEvent('down', e, false));
+    sim.canvas.addEventListener('mouseup', e => mouseEvent('up', e, false));
+    sim.canvas.addEventListener('mousemove', e => mouseEvent('move', e, false));
 
-    sim.canvas.addEventListener('mouseup', e => {
-        impulse.currentPos = null;
-        impulse.lastPos = null;
-        impulse.forceActive = false;
-        impulse.inkActive = false;
-    });
-
-    sim.canvas.addEventListener('mousemove', e => {
-        if (impulse.forceActive || impulse.inkActive) {
-            let temp = impulse.currentPos;
-            impulse.currentPos = new Vec2(e.offsetX, sim.canvas.height - e.offsetY);
-            impulse.lastPos = temp;
-            impulse.delta = impulse.currentPos.subtract(impulse.lastPos);
-        }
-    });
+    sim.canvas.addEventListener('touchstart', e => mouseEvent('down', e, true));
+    sim.canvas.addEventListener('touchend', e => mouseEvent('up', e, true));
+    sim.canvas.addEventListener('touchmove', e => mouseEvent('move', e, true));
 
     document.getElementById("rdInk").addEventListener('change', updateDisplayField);
     document.getElementById("rdVelocity").addEventListener('change', updateDisplayField);
     document.getElementById("rdPressure").addEventListener('change', updateDisplayField);
     document.getElementById("rdVorticity").addEventListener('change', updateDisplayField);
 
-    document.getElementById('btnUpdate').addEventListener('click', updateFromParamInputs);
+    document.getElementById('btnUpdate').addEventListener('click', updateFromParamVars);
     document.getElementById('btnClear').addEventListener('click', clearFields);
     document.getElementById('btnPause').addEventListener('click', toggleSimulation);
 
+    document.getElementById('clrInk').value = rgbfToHex(sim.params.inkColour);
+    document.getElementById('clrInk').addEventListener('change', (e) => {
+        sim.params.inkColour = hexToRgb(e.target.value);
+    });
+
     window.requestAnimationFrame(tick);
+}
+
+function mouseEvent(type, event, isTouch) {
+    let x, y;
+
+    if (isTouch) {
+        event.preventDefault();
+        x = event.changedTouches[0].pageX;
+        y = event.changedTouches[0].pageY;
+    }
+    else {
+        x = event.offsetX;
+        y = event.offsetY;
+    }
+
+    if (type == 'down') {
+        if (!impulse.forceActive && !impulse.inkActive) {
+            impulse.forceActive = true;
+            impulse.inkActive = true;
+            impulse.currentPos = new Vec2(x, sim.canvas.height - y);
+            impulse.lastPos = impulse.currentPos;
+            impulse.delta = new Vec2(0, 0);
+        }
+    }
+    else if (type == 'up') {
+        impulse.currentPos = null;
+        impulse.lastPos = null;
+        impulse.forceActive = false;
+        impulse.inkActive = false;
+    }
+    else if (type == 'move') {
+        if (impulse.forceActive || impulse.inkActive) {
+            let temp = impulse.currentPos;
+            impulse.currentPos = new Vec2(x, sim.canvas.height - y);
+            impulse.lastPos = temp;
+            impulse.delta = impulse.currentPos.subtract(impulse.lastPos);
+        }
+    }
 }
 
 function fillParamInputs(params) {
@@ -368,11 +419,22 @@ function fillParamInputs(params) {
     document.getElementById("rdVorticity").checked = params.displayField == 'vorticity';
 
     document.getElementById("chkSelfAdvect").checked = params.selfAdvect;
+    document.getElementById("chkSelfAdvect").addEventListener('change', updateParamFlags);
+
     document.getElementById("chkInkAdvect").checked = params.advectInk;
+    document.getElementById("chkInkAdvect").addEventListener('change', updateParamFlags);
+
     document.getElementById("chkDiffuse").checked = params.diffuseVelocity;
+    document.getElementById("chkDiffuse").addEventListener('change', updateParamFlags);
+
     document.getElementById("chkInkDiffuse").checked = params.diffuseInk;
+    document.getElementById("chkInkDiffuse").addEventListener('change', updateParamFlags);
+
     document.getElementById("chkVorticity").checked = params.addVorticity;
+    document.getElementById("chkVorticity").addEventListener('change', updateParamFlags);
+
     document.getElementById("chkBoundaries").checked = params.computeBoundaries;
+    document.getElementById("chkBoundaries").addEventListener('change', updateParamFlags);
 
     document.getElementById('txtGridScale').value = params.gridScale;
     document.getElementById('txtVorticity').value = params.vorticity;
@@ -384,14 +446,16 @@ function fillParamInputs(params) {
     document.getElementById('txtVolume').value = params.inkVolume;
 }
 
-function updateFromParamInputs() {
+function updateParamFlags() {
     sim.params.selfAdvect = document.getElementById("chkSelfAdvect").checked;
     sim.params.advectInk = document.getElementById("chkInkAdvect").checked;
     sim.params.diffuseVelocity = document.getElementById("chkDiffuse").checked;
     sim.params.diffuseInk = document.getElementById("chkInkDiffuse").checked;
     sim.params.addVorticity = document.getElementById("chkVorticity").checked;
     sim.params.computeBoundaries = document.getElementById("chkBoundaries").checked;
+}
 
+function updateFromParamVars() {
     sim.params.gridScale = parseFloat(document.getElementById('txtGridScale').value);
     sim.params.vorticity = parseFloat(document.getElementById('txtVorticity').value);
     sim.params.viscosity = parseFloat(document.getElementById('txtViscosity').value);
@@ -520,8 +584,8 @@ function computeFields() {
         let diff = impulse.delta;
 
         let force = new Vec3(Math.min(Math.max(diff.x, -1 * sim.params.gridScale), sim.params.gridScale),
-                                Math.min(Math.max(diff.y, -1 * sim.params.gridScale), sim.params.gridScale),
-                                0);
+            Math.min(Math.max(diff.y, -1 * sim.params.gridScale), sim.params.gridScale),
+            0);
 
         //sim.debugOutput.value = `Position: (${impulse.currentPos.x},${impulse.currentPos.y}) - Force: (${force.x},${force.y})`;
         sim.shaders.impulse.use();
@@ -654,6 +718,20 @@ function drawQuad(buffer) {
     gl.enableVertexAttribArray(0);
     gl.bindFramebuffer(gl.FRAMEBUFFER, buffer);
     gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+}
+
+function toHex(c) {
+    let hex = c.toString(16);
+    return hex.length == 1 ? "0" + hex : hex;
+}
+
+function rgbfToHex(vec) {
+    return "#" + toHex((vec.x * 255).toFixed(0) | 0) + toHex((vec.y * 255).toFixed(0) | 0) + toHex((vec.z * 255).toFixed(0) | 0);
+}
+
+function hexToRgb(hex) {
+    let result = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(hex);
+    return result ? new Vec3(parseInt(result[1], 16) / 255, parseInt(result[2], 16) / 255, parseInt(result[3], 16) / 255) : null;
 }
 
 var glsl = {

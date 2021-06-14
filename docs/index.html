@@ -2,6 +2,8 @@
 <html>
 
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <link rel="stylesheet" href="style/bootstrap.css" />
     <link rel="stylesheet" href="style/ui.css" />
     <script src="js/sim.js"></script>
@@ -9,7 +11,7 @@
 
 
 <body>
-    <div style="display: flex; flex-direction: column; justify-content: start;">
+    <div style="display: flex; flex-direction: column; justify-content: center;">
         <div class="mx-auto mt-3">
             <center><h2 class="heading">i n k b o x</h2></center>
             <canvas id="mainCanvas" width="400" height="400"></canvas>
@@ -19,17 +21,19 @@
         </div>
 
         <div class="mx-auto mt-2">
-            <input type="radio" id="rdInk" name="displayField">
-            <label for="rdInk" style="padding-right: 1em;">Ink</label>
+            <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
+                <input type="radio" class="btn-check" name="displayField" id="rdInk" autocomplete="off">
+                <label class="btn btn-primary btn-theme" style="color: #fff;background-color: hsl(275, 59%, 40%) !important;border-color: hsl(275, 59%, 20%) !important;" for="rdInk">Ink</label>
 
-            <input type="radio" id="rdVelocity" name="displayField">
-            <label for="rdVelocity" style="padding-right: 1em;">Velocity</label>
+                <input type="radio" class="btn-check" name="displayField" id="rdVelocity" autocomplete="off">
+                <label class="btn btn-primary btn-theme" style="color: #fff;background-color: hsl(275, 59%, 40%) !important;border-color: hsl(275, 59%, 20%) !important;" for="rdVelocity">Velocity</label>
 
-            <input type="radio" id="rdPressure" name="displayField">
-            <label for="rdPressure" style="padding-right: 1em;">Pressure</label>
+                <input type="radio" class="btn-check" name="displayField" id="rdPressure" autocomplete="off">
+                <label class="btn btn-primary btn-theme" style="color: #fff;background-color: hsl(275, 59%, 40%) !important;border-color: hsl(275, 59%, 20%) !important;" for="rdPressure">Pressure</label>
 
-            <input type="radio" id="rdVorticity" name="displayField">
-            <label for="rdVorticity" style="padding-right: 1em;">Vorticity</label>
+                <input type="radio" class="btn-check" name="displayField" id="rdVorticity" autocomplete="off">
+                <label class="btn btn-primary btn-theme" style="color: #fff;background-color: hsl(275, 59%, 40%) !important;border-color: hsl(275, 59%, 20%) !important;" for="rdVorticity">Vorticity</label>
+            </div>
         </div>
         <div class="mx-auto mt-4">
             <table class="my-2" style="border: 0; font-size: small;">
@@ -107,14 +111,20 @@
                         <input class="sim-var" type="text" id="txtVolume" />
                     </td>
                 </tr>
+                <tr>
+                    <td class="align-end">
+                        <label>Colour</label>
+                        <input class="sim-var" type="color" id="clrInk" />
+                    </td>
+                    <td class="align-end">
+                    </td>
+                </tr>
 
                 <tr>
-                    <td style="padding-top: 1em;">
+                    <td colspan="2" style="padding-top: 1em;">
                         <button type="button" class="btn btn-sm btn-primary" id="btnUpdate">Update</button>
                         <button type="button" class="btn btn-sm btn-primary" id="btnClear">Clear</button>
                         <button type="button" class="btn btn-sm btn-primary" id="btnPause">Pause</button>
-                    </td>
-                    <td style="padding-top: 1em;">
                     </td>
                 </tr>
             </table>
