@@ -71,7 +71,6 @@ private:
 	QuadShaderOp gradient;
 	QuadShaderOp divergence;
 	QuadShaderOp subtract;
-	BorderShaderOp boundaries;
 
 	GLFWwindow* window;
 	FPSLimiter limiter;

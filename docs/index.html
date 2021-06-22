@@ -23,16 +23,16 @@
         <div class="mx-auto mt-2">
             <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
                 <input type="radio" class="btn-check" name="displayField" id="rdInk" autocomplete="off">
-                <label class="btn btn-primary btn-theme" style="color: #fff;background-color: hsl(275, 59%, 40%) !important;border-color: hsl(275, 59%, 20%) !important;" for="rdInk">Ink</label>
+                <label class="btn btn-sm btn-primary btn-theme" style="color: #fff;background-color: hsl(275, 59%, 40%) !important;border-color: hsl(275, 59%, 20%) !important;" for="rdInk">Ink</label>
 
                 <input type="radio" class="btn-check" name="displayField" id="rdVelocity" autocomplete="off">
-                <label class="btn btn-primary btn-theme" style="color: #fff;background-color: hsl(275, 59%, 40%) !important;border-color: hsl(275, 59%, 20%) !important;" for="rdVelocity">Velocity</label>
+                <label class="btn btn-sm btn-primary btn-theme" style="color: #fff;background-color: hsl(275, 59%, 40%) !important;border-color: hsl(275, 59%, 20%) !important;" for="rdVelocity">Velocity</label>
 
                 <input type="radio" class="btn-check" name="displayField" id="rdPressure" autocomplete="off">
-                <label class="btn btn-primary btn-theme" style="color: #fff;background-color: hsl(275, 59%, 40%) !important;border-color: hsl(275, 59%, 20%) !important;" for="rdPressure">Pressure</label>
+                <label class="btn btn-sm btn-primary btn-theme" style="color: #fff;background-color: hsl(275, 59%, 40%) !important;border-color: hsl(275, 59%, 20%) !important;" for="rdPressure">Pressure</label>
 
                 <input type="radio" class="btn-check" name="displayField" id="rdVorticity" autocomplete="off">
-                <label class="btn btn-primary btn-theme" style="color: #fff;background-color: hsl(275, 59%, 40%) !important;border-color: hsl(275, 59%, 20%) !important;" for="rdVorticity">Vorticity</label>
+                <label class="btn btn-sm btn-primary btn-theme" style="color: #fff;background-color: hsl(275, 59%, 40%) !important;border-color: hsl(275, 59%, 20%) !important;" for="rdVorticity">Vorticity</label>
             </div>
         </div>
         <div class="mx-auto mt-4">
@@ -65,7 +65,7 @@
                         <label>Vorticity</label>
                         <input type="checkbox" id="chkVorticity" />
                     </td>
-                    <td class="align-end">
+                    <td class="align-end" style="display:none;">
                         <label>Boundary Conditions</label>
                         <input type="checkbox" id="chkBoundaries" />
                     </td>
@@ -117,6 +117,8 @@
                         <input class="sim-var" type="color" id="clrInk" />
                     </td>
                     <td class="align-end">
+                        <label>All the colours of the bow, man</label>
+                        <input type="checkbox" id="chkRainbow" />
                     </td>
                 </tr>
 

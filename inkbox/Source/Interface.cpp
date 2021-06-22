@@ -222,8 +222,11 @@ void ControlPanel::Render(bool& update_vars, bool& clear_buffers)
     
     if (is3D)
     {
-        TEXTBOX("Force Multiplier", texts->ForceMultiplier);
+        TEXTBOX("Force Scale", texts->ForceMultiplier);
+        ImGui::SameLine(200);
     }
+
+    ImGui::Checkbox("Droplets", &simvars->DropletsMode);
 
     // ImVec4 and glm::vec4 have the same layout
     ImGui::ColorEdit4("Ink Colour", (float*)&simvars->InkColour, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
@@ -231,7 +234,7 @@ void ControlPanel::Render(bool& update_vars, bool& clear_buffers)
     ImGui::Text("Ink Colour");
 
     ImGui::SameLine(200);
-    ImGui::Checkbox("Droplets", &simvars->DropletsMode);
+    ImGui::Checkbox("Rainbow", &simvars->RainbowMode);
     if (ImGui::Button("Update"))
         update_vars = true; 
 
@@ -306,6 +309,7 @@ ImpulseState::ImpulseState()
     , LastPos()
     , CurrentPos()
     , Delta()
+    , RainbowModeHue()
 {
 }
 
@@ -345,6 +349,46 @@ void ImpulseState::Reset()
     ForceActive = false;
     InkActive = false;
     Radial = false;
+}
+
+float HueToRGB(float p, float q, float t)
+{
+    if (t < 0) t += 1;
+    if (t > 1) t -= 1;
+    if (t < (1.f / 6.f)) return p + (q - p) * 6 * t;
+    if (t < (1.f / 2.f)) return q;
+    if (t < (2.f / 3.f)) return p + (q - p) * ((2.f / 3.f) - t) * 6;
+    return p;
+};
+
+// Credit to mjackson: https://gist.github.com/mjackson/5311256
+vec4 HSLToRGB(float h, float s, float l)
+{
+    float r, g, b;
+
+    if (s == 0) 
+    {
+        r = g = b = l; // achromatic
+    }
+    else 
+    {
+        float q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        float p = 2 * l - q;
+        r = HueToRGB(p, q, h + (1.f / 3.f));
+        g = HueToRGB(p, q, h);
+        b = HueToRGB(p, q, h - (1.f / 3.f));
+    }
+
+    return vec4(r, g, b, 1.0f);
+}
+
+glm::vec4 ImpulseState::TickRainbowMode(float delta_t)
+{
+    RainbowModeHue += delta_t / 0.016667f;
+    if (RainbowModeHue > 360.f)
+        RainbowModeHue = 0;
+
+    return HSLToRGB(RainbowModeHue / 360, 1, 0.5);
 }
 
 ///////////////////////////
@@ -448,6 +492,7 @@ SimulationVars::SimulationVars()
     , AddVorticity(true)
     , BoundariesEnabled(true)
     , DropletsMode(false)
+    , RainbowMode(false)
     , InkColour(0.54, 0.2, 0.78, 1.0)
     , DisplayField(SimulationField::Ink)
 {

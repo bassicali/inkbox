@@ -2,12 +2,9 @@
 'use strict';
 
 var gl = null;
-
-var env = {
-    textureType: null,
-    supportsLinearSampling: false,
-    filtering: null
-}
+var params = null;
+var shaders = null;
+var fields = null;
 
 var sim = {
     canvas: null,
@@ -16,11 +13,14 @@ var sim = {
     borders: null,
     current_time: 0,
     delta_t: 0,
-    fields: null,
-    shaders: null,
-    params: null,
     paused: false,
     fpsDisplay: null
+}
+
+var env = {
+    textureType: null,
+    supportsLinearSampling: false,
+    filtering: null
 }
 
 var impulse = {
@@ -223,17 +223,23 @@ class Vec3 {
 }
 
 function init() {
+    let isMobile = /Android|webOS|iPhone|iPad|Mac|Macintosh|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     sim.canvas = document.getElementById('mainCanvas');
-    sim.context = sim.canvas.getContext('webgl');
-
-    if (sim.context == null) {
-        alert('Unable to initialize WebGL. Your browser or device may not support it.');
-        return;
+    
+    if (isMobile) {
+        let w = (window.innerWidth > 0) ? window.innerWidth : screen.width;
+        if (w <= 400) {
+            sim.canvas.width = w;
+            sim.canvas.height = w;
+        }
     }
 
-    gl = sim.context;
+    gl = sim.canvas.getContext('webgl');
 
-    let isMobile = /Android|webOS|iPhone|iPad|Mac|Macintosh|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (gl == null) {
+        alert('Your browser or device does not supported webgl :(');
+        return;
+    }
 
     // On my iphone this extension is supported but trying to render to it doesn't work
     if (!isMobile) {
@@ -260,6 +266,11 @@ function init() {
         }
     }
 
+    if (env.textureType == null) {
+        alert('Your browser or device does not support floating point textures :(');
+        return;
+    }
+
     env.filtering = env.supportsLinearSampling ? gl.LINEAR : gl.NEAREST;
 
     sim.fpsDisplay = document.getElementById('fpsText');
@@ -267,7 +278,7 @@ function init() {
     let w = gl.canvas.width;
     let h = gl.canvas.height;
 
-    let c = new Vec3(1 - 1.5/w, 1 - 1.5/h, 0);
+    let c = new Vec2(1 - 1.5/w, 1 - 1.5/h);
     let quadVerts = [c.x, -c.y,
                      c.x,  c.y,
                     -c.x,  c.y,
@@ -275,7 +286,7 @@ function init() {
 
     sim.quad = new VertexList(quadVerts, [0, 1, 3, 1, 2, 3]);
 
-    c = new Vec3(1 - 0.5/w, 1 - 0.5/h);
+    c = new Vec2(1 - 0.5/w, 1 - 0.5/h);
     let borderVerts = [c.x, -c.y,
                        c.x,  c.y,
                       -c.x,  c.y,
@@ -290,7 +301,7 @@ function init() {
 
     let vshader = new Shader(gl.VERTEX_SHADER, glsl.vert);
 
-    sim.shaders = {
+    shaders = {
         advection: new ShaderProgram(vshader, new Shader(gl.FRAGMENT_SHADER, glsl.adv)),
         impulse: new ShaderProgram(vshader, new Shader(gl.FRAGMENT_SHADER, glsl.impulse)),
         vorticity: new ShaderProgram(vshader, new Shader(gl.FRAGMENT_SHADER, glsl.vorticity)),
@@ -308,12 +319,12 @@ function init() {
     }
 
     let rdv = new Vec2(1 / w, 1 / h);
-    for (const prop in sim.shaders) {
-        sim.shaders[prop].use();
-        sim.shaders[prop].setVec2('stride', rdv);
+    for (const prop in shaders) {
+        shaders[prop].use();
+        shaders[prop].setVec2('stride', rdv);
     }
 
-    sim.fields = {
+    fields = {
         velocity: new SwapFBO(w, h),
         velocityVis: new FBO(w, h),
         ink: new SwapFBO(w, h),
@@ -325,13 +336,13 @@ function init() {
         temp: new FBO(w, h)
     }
 
-    sim.params = {
+    params = {
         selfAdvect: true,
         advectInk: true,
         diffuseVelocity: true,
         diffuseInk: true,
         addVorticity: true,
-        computeBoundaries: false,
+        computeBoundaries: false, // TODO: fix boundary enforcement
 
         rdv: rdv,
         gridScale: 0.3,
@@ -344,10 +355,13 @@ function init() {
         inkVolume: 0.002,
 
         inkColour: new Vec3(0.54, 0.2, 0.78),
+        rainbowModeHue: null,
+        rainbowModeEnabled: false,
 
         displayField: 'ink'
     }
-    fillParamInputs(sim.params);
+
+    setupParamsForm(params);
 
     sim.canvas.addEventListener('mousedown', e => mouseEvent('down', e, false));
     sim.canvas.addEventListener('mouseup', e => mouseEvent('up', e, false));
@@ -366,32 +380,40 @@ function init() {
     document.getElementById('btnClear').addEventListener('click', clearFields);
     document.getElementById('btnPause').addEventListener('click', toggleSimulation);
 
-    document.getElementById('clrInk').value = rgbfToHex(sim.params.inkColour);
+    document.getElementById('clrInk').value = rgbfToHex(params.inkColour);
     document.getElementById('clrInk').addEventListener('change', (e) => {
-        sim.params.inkColour = hexToRgb(e.target.value);
+        params.inkColour = hexToRgb(e.target.value);
     });
 
     window.requestAnimationFrame(tick);
 }
 
+function getRelativeMousePos(mouse) {
+    let rect = sim.canvas.getBoundingClientRect();
+    let scx = sim.canvas.width / rect.width;
+    let scy = sim.canvas.height / rect.height;
+    let x = (mouse.clientX - rect.left) * scx;
+    let y = (mouse.clientY - rect.top) * scy;
+    return new Vec2(x, y);
+}
+
 function mouseEvent(type, event, isTouch) {
-    let x, y;
+    let pos;
 
     if (isTouch) {
         event.preventDefault();
-        x = event.changedTouches[0].pageX;
-        y = event.changedTouches[0].pageY;
+        let idx = event.changedTouches.length - 1;
+        pos = getRelativeMousePos(event.changedTouches[idx]);
     }
     else {
-        x = event.offsetX;
-        y = event.offsetY;
+        pos = getRelativeMousePos(event);
     }
 
     if (type == 'down') {
         if (!impulse.forceActive && !impulse.inkActive) {
             impulse.forceActive = true;
             impulse.inkActive = true;
-            impulse.currentPos = new Vec2(x, sim.canvas.height - y);
+            impulse.currentPos = new Vec2(pos.x, sim.canvas.height - pos.y);
             impulse.lastPos = impulse.currentPos;
             impulse.delta = new Vec2(0, 0);
         }
@@ -405,14 +427,14 @@ function mouseEvent(type, event, isTouch) {
     else if (type == 'move') {
         if (impulse.forceActive || impulse.inkActive) {
             let temp = impulse.currentPos;
-            impulse.currentPos = new Vec2(x, sim.canvas.height - y);
+            impulse.currentPos = new Vec2(pos.x, sim.canvas.height - pos.y);
             impulse.lastPos = temp;
             impulse.delta = impulse.currentPos.subtract(impulse.lastPos);
         }
     }
 }
 
-function fillParamInputs(params) {
+function setupParamsForm(params) {
     document.getElementById("rdInk").checked = params.displayField == 'ink';
     document.getElementById("rdVelocity").checked = params.displayField == 'velocity';
     document.getElementById("rdPressure").checked = params.displayField == 'pressure';
@@ -436,6 +458,9 @@ function fillParamInputs(params) {
     document.getElementById("chkBoundaries").checked = params.computeBoundaries;
     document.getElementById("chkBoundaries").addEventListener('change', updateParamFlags);
 
+    document.getElementById("chkRainbow").checked = params.rainbowModeEnabled;
+    document.getElementById("chkRainbow").addEventListener('change', toggleRainbowMode);
+
     document.getElementById('txtGridScale').value = params.gridScale;
     document.getElementById('txtVorticity').value = params.vorticity;
     document.getElementById('txtViscosity').value = params.viscosity;
@@ -447,37 +472,37 @@ function fillParamInputs(params) {
 }
 
 function updateParamFlags() {
-    sim.params.selfAdvect = document.getElementById("chkSelfAdvect").checked;
-    sim.params.advectInk = document.getElementById("chkInkAdvect").checked;
-    sim.params.diffuseVelocity = document.getElementById("chkDiffuse").checked;
-    sim.params.diffuseInk = document.getElementById("chkInkDiffuse").checked;
-    sim.params.addVorticity = document.getElementById("chkVorticity").checked;
-    sim.params.computeBoundaries = document.getElementById("chkBoundaries").checked;
+    params.selfAdvect = document.getElementById("chkSelfAdvect").checked;
+    params.advectInk = document.getElementById("chkInkAdvect").checked;
+    params.diffuseVelocity = document.getElementById("chkDiffuse").checked;
+    params.diffuseInk = document.getElementById("chkInkDiffuse").checked;
+    params.addVorticity = document.getElementById("chkVorticity").checked;
+    params.computeBoundaries = document.getElementById("chkBoundaries").checked;
 }
 
 function updateFromParamVars() {
-    sim.params.gridScale = parseFloat(document.getElementById('txtGridScale').value);
-    sim.params.vorticity = parseFloat(document.getElementById('txtVorticity').value);
-    sim.params.viscosity = parseFloat(document.getElementById('txtViscosity').value);
-    sim.params.inkViscosity = parseFloat(document.getElementById('txtInkViscosity').value);
-    sim.params.advectionDissipation = parseFloat(document.getElementById('txtDissipation').value);
-    sim.params.inkAdvectionDissipation = parseFloat(document.getElementById('txtInkDissipation').value);
-    sim.params.forceRadius = parseFloat(document.getElementById('txtRadius').value);
-    sim.params.inkVolume = parseFloat(document.getElementById('txtVolume').value);
+    params.gridScale = parseFloat(document.getElementById('txtGridScale').value);
+    params.vorticity = parseFloat(document.getElementById('txtVorticity').value);
+    params.viscosity = parseFloat(document.getElementById('txtViscosity').value);
+    params.inkViscosity = parseFloat(document.getElementById('txtInkViscosity').value);
+    params.advectionDissipation = parseFloat(document.getElementById('txtDissipation').value);
+    params.inkAdvectionDissipation = parseFloat(document.getElementById('txtInkDissipation').value);
+    params.forceRadius = parseFloat(document.getElementById('txtRadius').value);
+    params.inkVolume = parseFloat(document.getElementById('txtVolume').value);
 }
 
 function updateDisplayField() {
-    if (sim.params.displayField = document.getElementById("rdInk").checked) {
-        sim.params.displayField = 'ink';
+    if (params.displayField = document.getElementById("rdInk").checked) {
+        params.displayField = 'ink';
     }
-    else if (sim.params.displayField = document.getElementById("rdVelocity").checked) {
-        sim.params.displayField = 'velocity';
+    else if (params.displayField = document.getElementById("rdVelocity").checked) {
+        params.displayField = 'velocity';
     }
-    else if (sim.params.displayField = document.getElementById("rdPressure").checked) {
-        sim.params.displayField = 'pressure';
+    else if (params.displayField = document.getElementById("rdPressure").checked) {
+        params.displayField = 'pressure';
     }
-    else if (sim.params.displayField = document.getElementById("rdVorticity").checked) {
-        sim.params.displayField = 'vorticity';
+    else if (params.displayField = document.getElementById("rdVorticity").checked) {
+        params.displayField = 'vorticity';
     }
 }
 
@@ -494,9 +519,17 @@ function toggleSimulation() {
     }
 }
 
+function toggleRainbowMode() {
+    params.rainbowModeEnabled = !params.rainbowModeEnabled;
+
+    if (params.rainbowModeEnabled) {
+        params.rainbowModeHue = 0;
+    }
+}
+
 function clearFields() {
-    for (const field in sim.fields) {
-        sim.fields[field].clear();
+    for (const field in fields) {
+        fields[field].clear();
     }
 }
 
@@ -511,39 +544,39 @@ function tick(timestamp) {
     computeFields();
     let outputTexture = null;
 
-    if (sim.params.displayField == 'ink') {
-        outputTexture = sim.fields.ink.front.texture;
+    if (params.displayField == 'ink') {
+        outputTexture = fields.ink.front.texture;
     }
-    else if (sim.params.displayField == 'velocity') {
-        sim.shaders.vectorVis.use();
-        sim.shaders.vectorVis.setVec4('bias', 0.5, 0.5, 0.5, 0.5);
-        sim.shaders.vectorVis.setVec4('scale', 0.5, 0.5, 0.5, 0.5);
-        sim.shaders.vectorVis.setTexture('field', sim.fields.velocity.front.texture, 0);
-        drawQuad(sim.fields.velocityVis.buffer);
+    else if (params.displayField == 'velocity') {
+        shaders.vectorVis.use();
+        shaders.vectorVis.setVec4('bias', 0.5, 0.5, 0.5, 0.5);
+        shaders.vectorVis.setVec4('scale', 0.5, 0.5, 0.5, 0.5);
+        shaders.vectorVis.setTexture('field', fields.velocity.front.texture, 0);
+        drawQuad(fields.velocityVis.buffer);
 
-        outputTexture = sim.fields.velocityVis.texture;
+        outputTexture = fields.velocityVis.texture;
     }
-    else if (sim.params.displayField == 'pressure') {
-        sim.shaders.scalarVis.use();
-        sim.shaders.scalarVis.setVec4('bias', 0, 0, 0, 0);
-        sim.shaders.scalarVis.setVec4('scale', 2, -1, -2, 1);
-        sim.shaders.scalarVis.setTexture('field', sim.fields.pressure.front.texture, 0);
-        drawQuad(sim.fields.pressureVis.buffer);
+    else if (params.displayField == 'pressure') {
+        shaders.scalarVis.use();
+        shaders.scalarVis.setVec4('bias', 0, 0, 0, 0);
+        shaders.scalarVis.setVec4('scale', 2, -1, -2, 1);
+        shaders.scalarVis.setTexture('field', fields.pressure.front.texture, 0);
+        drawQuad(fields.pressureVis.buffer);
 
-        outputTexture = sim.fields.pressureVis.texture;
+        outputTexture = fields.pressureVis.texture;
     }
     else {
-        sim.shaders.scalarVis.use();
-        sim.shaders.scalarVis.setVec4('bias', 0, 0, 0, 0);
-        sim.shaders.scalarVis.setVec4('scale', 1, 1, -1, -1);
-        sim.shaders.scalarVis.setTexture('field', sim.fields.vorticity.texture, 0);
-        drawQuad(sim.fields.vorticityVis.buffer);
+        shaders.scalarVis.use();
+        shaders.scalarVis.setVec4('bias', 0, 0, 0, 0);
+        shaders.scalarVis.setVec4('scale', 1, 1, -1, -1);
+        shaders.scalarVis.setTexture('field', fields.vorticity.texture, 0);
+        drawQuad(fields.vorticityVis.buffer);
 
-        outputTexture = sim.fields.vorticityVis.texture;
+        outputTexture = fields.vorticityVis.texture;
     }
 
-    sim.shaders.copy.use();
-    sim.shaders.copy.setTexture('field', outputTexture, 0);
+    shaders.copy.use();
+    shaders.copy.setTexture('field', outputTexture, 0);
     drawQuad(null);
 
     if (!sim.paused) {
@@ -552,141 +585,154 @@ function tick(timestamp) {
 }
 
 function computeFields() {
-    if (sim.params.selfAdvect) {
-        computeBoundaries(sim.fields.velocity, -1);
+    if (params.selfAdvect) {
+        computeBoundaries(fields.velocity, -1);
 
-        sim.shaders.advection.use();
-        sim.shaders.advection.setFloat('delta_t', sim.delta_t);
-        sim.shaders.advection.setFloat('gs', sim.params.gridScale);
-        sim.shaders.advection.setFloat('dissipation', sim.params.advectionDissipation);
-        sim.shaders.advection.setTexture('velocity', sim.fields.velocity.front.texture, 0);
-        sim.shaders.advection.setTexture('quantity', sim.fields.velocity.front.texture, 1);
+        shaders.advection.use();
+        shaders.advection.setFloat('delta_t', sim.delta_t);
+        shaders.advection.setFloat('gs', params.gridScale);
+        shaders.advection.setFloat('dissipation', params.advectionDissipation);
+        shaders.advection.setTexture('velocity', fields.velocity.front.texture, 0);
+        shaders.advection.setTexture('quantity', fields.velocity.front.texture, 1);
 
-        drawQuad(sim.fields.velocity.back.buffer);
-        sim.fields.velocity.swap();
+        drawQuad(fields.velocity.back.buffer);
+        fields.velocity.swap();
     }
 
-    if (sim.params.advectInk) {
-        computeBoundaries(sim.fields.ink, 0);
+    if (params.advectInk) {
+        computeBoundaries(fields.ink, 0);
 
-        sim.shaders.advection.use();
-        sim.shaders.advection.setFloat('delta_t', sim.delta_t);
-        sim.shaders.advection.setFloat('gs', sim.params.gridScale);
-        sim.shaders.advection.setFloat('dissipation', sim.params.inkAdvectionDissipation);
-        sim.shaders.advection.setTexture('velocity', sim.fields.velocity.front.texture, 0);
-        sim.shaders.advection.setTexture('quantity', sim.fields.ink.front.texture, 1);
+        shaders.advection.use();
+        shaders.advection.setFloat('delta_t', sim.delta_t);
+        shaders.advection.setFloat('gs', params.gridScale);
+        shaders.advection.setFloat('dissipation', params.inkAdvectionDissipation);
+        shaders.advection.setTexture('velocity', fields.velocity.front.texture, 0);
+        shaders.advection.setTexture('quantity', fields.ink.front.texture, 1);
 
-        drawQuad(sim.fields.ink.back.buffer);
-        sim.fields.ink.swap();
+        drawQuad(fields.ink.back.buffer);
+        fields.ink.swap();
     }
 
     if (impulse.forceActive) {
         let diff = impulse.delta;
 
-        let force = new Vec3(Math.min(Math.max(diff.x, -1 * sim.params.gridScale), sim.params.gridScale),
-            Math.min(Math.max(diff.y, -1 * sim.params.gridScale), sim.params.gridScale),
+        let force = new Vec3(Math.min(Math.max(diff.x, -1 * params.gridScale), params.gridScale),
+            Math.min(Math.max(diff.y, -1 * params.gridScale), params.gridScale),
             0);
 
-        //sim.debugOutput.value = `Position: (${impulse.currentPos.x},${impulse.currentPos.y}) - Force: (${force.x},${force.y})`;
-        sim.shaders.impulse.use();
-        sim.shaders.impulse.setFloat('radius', sim.params.forceRadius);
-        sim.shaders.impulse.setVec2('position', impulse.currentPos.mul(sim.params.rdv));
-        sim.shaders.impulse.setVec3('force', force);
-        sim.shaders.impulse.setTexture('velocity', sim.fields.velocity.front.texture, 0);
-        drawQuad(sim.fields.velocity.back.buffer);
-        sim.fields.velocity.swap();
+        shaders.impulse.use();
+        shaders.impulse.setFloat('radius', params.forceRadius);
+        shaders.impulse.setVec2('position', impulse.currentPos.mul(params.rdv));
+        shaders.impulse.setVec3('force', force);
+        shaders.impulse.setTexture('velocity', fields.velocity.front.texture, 0);
+        drawQuad(fields.velocity.back.buffer);
+        fields.velocity.swap();
     }
 
     if (impulse.inkActive) {
-        sim.shaders.impulse.use();
-        sim.shaders.impulse.setFloat('radius', sim.params.inkVolume);
-        sim.shaders.impulse.setVec2('position', impulse.currentPos.mul(sim.params.rdv));
-        sim.shaders.impulse.setVec3('force', sim.params.inkColour);
-        sim.shaders.impulse.setTexture('velocity', sim.fields.ink.front.texture, 0);
-        drawQuad(sim.fields.ink.back.buffer);
-        sim.fields.ink.swap();
+        let colour;
+        if (params.rainbowModeEnabled) {
+
+            params.rainbowModeHue += sim.delta_t / 0.016667;
+            if (params.rainbowModeHue > 360) {
+                params.rainbowModeHue = 0;
+            }
+
+            colour = hslToRgb(params.rainbowModeHue / 360, 1, 0.5);
+        }
+        else {
+            colour = params.inkColour;
+        }
+
+        shaders.impulse.use();
+        shaders.impulse.setFloat('radius', params.inkVolume);
+        shaders.impulse.setVec2('position', impulse.currentPos.mul(params.rdv));
+        shaders.impulse.setVec3('force', colour);
+        shaders.impulse.setTexture('velocity', fields.ink.front.texture, 0);
+        drawQuad(fields.ink.back.buffer);
+        fields.ink.swap();
     }
 
-    if (sim.params.addVorticity) {
-        sim.shaders.vorticity.use();
-        sim.shaders.vorticity.setFloat('gs', sim.params.gridScale);
-        sim.shaders.vorticity.setTexture('velocity', sim.fields.velocity.front.texture, 0);
-        drawQuad(sim.fields.vorticity.buffer);
+    if (params.addVorticity) {
+        shaders.vorticity.use();
+        shaders.vorticity.setFloat('gs', params.gridScale);
+        shaders.vorticity.setTexture('velocity', fields.velocity.front.texture, 0);
+        drawQuad(fields.vorticity.buffer);
 
-        computeBoundaries(sim.fields.velocity, -1);
+        computeBoundaries(fields.velocity, -1);
 
-        sim.shaders.addVorticity.use();
-        sim.shaders.addVorticity.setFloat('gs', sim.params.gridScale);
-        sim.shaders.addVorticity.setFloat('delta_t', sim.delta_t);
-        sim.shaders.addVorticity.setFloat('scale', sim.params.vorticity);
-        sim.shaders.addVorticity.setTexture('velocity', sim.fields.velocity.front.texture, 0);
-        sim.shaders.addVorticity.setTexture('vorticity', sim.fields.vorticity.texture, 1);
-        drawQuad(sim.fields.velocity.back.buffer);
-        sim.fields.velocity.swap();
+        shaders.addVorticity.use();
+        shaders.addVorticity.setFloat('gs', params.gridScale);
+        shaders.addVorticity.setFloat('delta_t', sim.delta_t);
+        shaders.addVorticity.setFloat('scale', params.vorticity);
+        shaders.addVorticity.setTexture('velocity', fields.velocity.front.texture, 0);
+        shaders.addVorticity.setTexture('vorticity', fields.vorticity.texture, 1);
+        drawQuad(fields.velocity.back.buffer);
+        fields.velocity.swap();
     }
 
-    if (sim.params.diffuseVelocity) {
-        let alpha = (sim.params.gridScale * sim.params.gridScale) / (sim.params.viscosity * sim.delta_t);
+    if (params.diffuseVelocity) {
+        let alpha = (params.gridScale * params.gridScale) / (params.viscosity * sim.delta_t);
         let beta = alpha + 4;
-        solvePoissonSystem(sim.fields.velocity, sim.fields.velocity.front.texture, alpha, beta);
+        solvePoissonSystem(fields.velocity, fields.velocity.front, alpha, beta);
     }
 
-    if (sim.params.diffuseInk) {
-        let alpha = (sim.params.gridScale * sim.params.gridScale) / (sim.params.inkViscosity * sim.delta_t);
+    if (params.diffuseInk) {
+        let alpha = (params.gridScale * params.gridScale) / (params.inkViscosity * sim.delta_t);
         let beta = alpha + 4;
-        solvePoissonSystem(sim.fields.ink, sim.fields.ink.front.texture, alpha, beta);
+        solvePoissonSystem(fields.ink, fields.ink.front, alpha, beta);
     }
 
     // Calculate div(W)
-    sim.shaders.divergence.use();
-    sim.shaders.divergence.setFloat('gs', sim.params.gridScale);
-    sim.shaders.divergence.setTexture('field', sim.fields.velocity.front.texture, 0);
-    drawQuad(sim.fields.velocity.back.buffer);
+    shaders.divergence.use();
+    shaders.divergence.setFloat('gs', params.gridScale);
+    shaders.divergence.setTexture('field', fields.velocity.front.texture, 0);
+    drawQuad(fields.velocity.back.buffer);
 
     // Solve for P in: Laplacian(P) = div(W)
-    solvePoissonSystem(sim.fields.pressure, sim.fields.velocity.back.texture, -sim.params.gridScale * sim.params.gridScale, 4);
+    solvePoissonSystem(fields.pressure, fields.velocity.back, -params.gridScale * params.gridScale, 4);
 
     // Calculate grad(P)
-    sim.shaders.gradient.use();
-    sim.shaders.gradient.setFloat('gs', sim.params.gridScale);
-    sim.shaders.gradient.setTexture('field', sim.fields.pressure.front.texture, 0);
-    drawQuad(sim.fields.pressure.back.buffer);
+    shaders.gradient.use();
+    shaders.gradient.setFloat('gs', params.gridScale);
+    shaders.gradient.setTexture('field', fields.pressure.front.texture, 0);
+    drawQuad(fields.pressure.back.buffer);
 
     // Calculate U = W - grad(P) where div(U)=0
-    sim.shaders.subtract.use();
-    sim.shaders.subtract.setTexture('a', sim.fields.velocity.front.texture, 0);
-    sim.shaders.subtract.setTexture('b', sim.fields.pressure.back.texture, 1);
-    drawQuad(sim.fields.velocity.back.buffer);
-    sim.fields.velocity.swap();
+    shaders.subtract.use();
+    shaders.subtract.setTexture('a', fields.velocity.front.texture, 0);
+    shaders.subtract.setTexture('b', fields.pressure.back.texture, 1);
+    drawQuad(fields.velocity.back.buffer);
+    fields.velocity.swap();
 }
 
 function computeBoundaries(swapFBO, scale) {
-    if (!sim.params.computeBoundaries) {
+    if (!params.computeBoundaries) {
         return;
     }
 
-    copyFBO(swapFBO.back, swapFBO.front.texture);
-    sim.shaders.boundaries.use();
-    sim.shaders.boundaries.setFloat('scale', scale);
-    sim.shaders.boundaries.setVec2('rdv', sim.params.rdv);
-    sim.shaders.boundaries.setTexture('field', swapFBO.front.texture, 0);
+    copyFBO(swapFBO.back, swapFBO.front);
+    shaders.boundaries.use();
+    shaders.boundaries.setFloat('scale', scale);
+    shaders.boundaries.setVec2('rdv', params.rdv);
+    shaders.boundaries.setTexture('field', swapFBO.front.texture, 0);
 
     gl.enableVertexAttribArray(0);
     gl.bindFramebuffer(gl.FRAMEBUFFER, swapFBO.back.buffer);
 
-    sim.shaders.boundaries.setVec2('offset', 0, -1);
+    shaders.boundaries.setVec2('offset', 0, -1);
     sim.borders.top.bind();
     gl.drawElements(gl.LINES, 2, gl.UNSIGNED_SHORT, 0);
 
-    sim.shaders.boundaries.setVec2('offset', 0, 1);
+    shaders.boundaries.setVec2('offset', 0, 1);
     sim.borders.bottom.bind();
     gl.drawElements(gl.LINES, 2, gl.UNSIGNED_SHORT, 0);
 
-    sim.shaders.boundaries.setVec2('offset', 1, 0);
+    shaders.boundaries.setVec2('offset', 1, 0);
     sim.borders.left.bind();
     gl.drawElements(gl.LINES, 2, gl.UNSIGNED_SHORT, 0);
 
-    sim.shaders.boundaries.setVec2('offset', -1, 0);
+    shaders.boundaries.setVec2('offset', -1, 0);
     sim.borders.right.bind();
     gl.drawElements(gl.LINES, 2, gl.UNSIGNED_SHORT, 0);
 
@@ -694,22 +740,22 @@ function computeBoundaries(swapFBO, scale) {
 }
 
 function solvePoissonSystem(swapFBO, initialValue, alpha, beta) {
-    copyFBO(sim.fields.temp, initialValue);
-    sim.shaders.jacobi.use();
-    sim.shaders.jacobi.setFloat('alpha', alpha);
-    sim.shaders.jacobi.setFloat('beta', beta);
-    sim.shaders.jacobi.setTexture('b', sim.fields.temp.texture, 1);
+    copyFBO(fields.temp, initialValue);
+    shaders.jacobi.use();
+    shaders.jacobi.setFloat('alpha', alpha);
+    shaders.jacobi.setFloat('beta', beta);
+    shaders.jacobi.setTexture('b', fields.temp.texture, 1);
 
     for (let i = 0; i < 20; i++) {
-        sim.shaders.jacobi.setTexture('x', swapFBO.front.texture, 0);
+        shaders.jacobi.setTexture('x', swapFBO.front.texture, 0);
         drawQuad(swapFBO.back.buffer);
         swapFBO.swap();
     }
 }
 
 function copyFBO(dest, src) {
-    sim.shaders.copy.use();
-    sim.shaders.copy.setTexture('field', src, 0);
+    shaders.copy.use();
+    shaders.copy.setTexture('field', src.texture, 0);
     drawQuad(dest.buffer);
 }
 
@@ -733,6 +779,33 @@ function hexToRgb(hex) {
     let result = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(hex);
     return result ? new Vec3(parseInt(result[1], 16) / 255, parseInt(result[2], 16) / 255, parseInt(result[3], 16) / 255) : null;
 }
+
+// Credit to mjackson: https://gist.github.com/mjackson/5311256
+function hslToRgb(h, s, l){
+    let r, g, b;
+
+    if (s == 0) {
+        r = g = b = l; // achromatic
+    }
+    else {
+        function hue2rgb(p, q, t) {
+            if(t < 0) t += 1;
+            if(t > 1) t -= 1;
+            if(t < 1/6) return p + (q - p) * 6 * t;
+            if(t < 1/2) return q;
+            if(t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+            return p;
+        };
+
+        let q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        let p = 2 * l - q;
+        r = hue2rgb(p, q, h + 1/3);
+        g = hue2rgb(p, q, h);
+        b = hue2rgb(p, q, h - 1/3);
+    }
+
+    return new Vec3(r, g, b);
+};
 
 var glsl = {
     vert: `

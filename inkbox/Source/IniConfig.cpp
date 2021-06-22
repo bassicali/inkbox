@@ -29,7 +29,7 @@ IniConfig::IniConfig()
 	, ScrollSensitivity(0.08)
 	, MouseOrbitSensitivity(0.008)
 	, KeyOrbitSensitivity(0.06)
-	, TextureComponentWidth(32)
+	, TextureComponentWidth(16)
 	, UseSnormTextures(false)
 {
 	fs::path config_path(CONFIG_FILE_NAME);

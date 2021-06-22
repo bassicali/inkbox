@@ -66,13 +66,10 @@ void PrintVec4(vec4 vec)
     printf("\t%.3f   %.3f   %.3f   %.3f\n", vec[0], vec[1], vec[2], vec[3]);
 }
 
-bool _InitComputeShader(const char* file, GLComputeShader& program, uvec3 local_size)
+bool _InitComputeShader(const char* file, GLComputeShader& program, uvec3 local_size, string img_format)
 {
-    string img_format;
-    if (!IniConfig::Get().UseSnormTextures)
-    {
-        img_format = "rgba32f";
-    }
+
+
     GLShader cs(file, ShaderType::Compute, local_size, img_format);
 
     if (!cs.Compile())
@@ -89,9 +86,9 @@ bool _InitComputeShader(const char* file, GLComputeShader& program, uvec3 local_
 }
 
 
-bool _InitFragmentShader(const char* file, GLShader& vs, GLShaderProgram& program)
+bool _InitFragmentShader(const char* file, GLShader& vs, GLShaderProgram& program, string img_format)
 {
-    GLShader fs(file, ShaderType::Fragment);
+    GLShader fs(file, ShaderType::Fragment, uvec3(), img_format);
     if (!fs.Compile())
         return false;
 
@@ -124,7 +121,7 @@ bool InkBox3DSimulation::CreateScene()
     {
         7, 4, 5,
         5, 6, 7,
-        
+
         3, 0, 1,
         1, 2, 3,
 
@@ -174,22 +171,28 @@ bool InkBox3DSimulation::CreateScene()
 
     cubeBorder.Init(&verts[0], 24, &border_indices[0], 24);
 
+    string img_format;
+    if (!IniConfig::Get().UseSnormTextures)
+        img_format = IniConfig::Get().TextureComponentWidth == 32 ? "rgba32f" : "rgba16f";
+    else
+        img_format = "rgba16_snorm";
+
     GLShader vs("3d\\tex_coords.vert", ShaderType::Vertex);
     if (!vs.Compile())
         return false;
 
-    _InitFragmentShader("3d\\view.frag", vs, viewShader);
-    _InitFragmentShader("3d\\border.frag", vs, borderShader);
+    _InitFragmentShader("3d\\view.frag", vs, viewShader, img_format);
+    _InitFragmentShader("3d\\border.frag", vs, borderShader, img_format);
 
-    _InitComputeShader("3d\\add_impulse.comp", impulseShader, computeLocalSize);
-    _InitComputeShader("3d\\advection.comp", advectionShader, computeLocalSize);
-    _InitComputeShader("3d\\jacobi.comp", jacobiShader, computeLocalSize);
-    _InitComputeShader("3d\\divergence.comp", divShader, computeLocalSize);
-    _InitComputeShader("3d\\gradient.comp", gradShader, computeLocalSize);
-    _InitComputeShader("3d\\subtract.comp", subtractShader, computeLocalSize);
-    _InitComputeShader("3d\\boundary.comp", boundaryShader, computeLocalSize);
-    _InitComputeShader("3d\\copy.comp", copyShader, computeLocalSize);
-    _InitComputeShader("3d\\clear.comp", clearShader, computeLocalSize);
+    _InitComputeShader("3d\\add_impulse.comp", impulseShader, computeLocalSize, img_format);
+    _InitComputeShader("3d\\advection.comp", advectionShader, computeLocalSize, img_format);
+    _InitComputeShader("3d\\jacobi.comp", jacobiShader, computeLocalSize, img_format);
+    _InitComputeShader("3d\\divergence.comp", divShader, computeLocalSize, string());
+    _InitComputeShader("3d\\gradient.comp", gradShader, computeLocalSize, img_format);
+    _InitComputeShader("3d\\subtract.comp", subtractShader, computeLocalSize, img_format);
+    _InitComputeShader("3d\\boundary.comp", boundaryShader, computeLocalSize, img_format);
+    _InitComputeShader("3d\\copy.comp", copyShader, computeLocalSize, img_format);
+    _InitComputeShader("3d\\clear.comp", clearShader, computeLocalSize, img_format);
 
     _GL_WRAP1(glEnable, GL_DEPTH_TEST);
     //_GL_WRAP1(glEnable, GL_BLEND);
@@ -212,7 +215,7 @@ void InkBox3DSimulation::WindowLoop()
 
     camera.LookAt(vec3(0, 0, 0));
     invProjView = inverse(projection * camera.ViewMatrix());
-    
+
     while (!glfwWindowShouldClose(window))
     {
         glfwMakeContextCurrent(window);
@@ -245,13 +248,13 @@ void InkBox3DSimulation::WindowLoop()
         _GL_WRAP4(glDrawElements, GL_TRIANGLES, cube.NumVertices, GL_UNSIGNED_INT, nullptr);
 
         // Draw a border around the cube
-        borderShader.Use(); 
+        borderShader.Use();
         borderShader.SetMatrix4x4("model", cubeModel);
         borderShader.SetMatrix4x4("view", camera.ViewMatrix());
         borderShader.SetMatrix4x4("proj", projection);
         _GL_WRAP1(glBindVertexArray, cubeBorder.VAO);
         _GL_WRAP4(glDrawElements, GL_LINES, cubeBorder.NumVertices, GL_UNSIGNED_INT, nullptr);
-        
+
         glfwSwapBuffers(window);
         limiter.Regulate();
 
@@ -285,7 +288,7 @@ void InkBox3DSimulation::ComputeFields()
         advectionShader.SetImage("quantity_w", textures.Ink.Back(), 1, GL_WRITE_ONLY);
         advectionShader.SetImage("velocity", textures.Velocity.Front(), 2, GL_READ_ONLY);
         advectionShader.Execute(computeWorkGroups);
-        textures.Ink.Swap(); 
+        textures.Ink.Swap();
     }
 
     if (vars.SelfAdvect)
@@ -318,10 +321,16 @@ void InkBox3DSimulation::ComputeFields()
 
     if (impulseState.InkActive)
     {
+        vec4 colour;
+        if (vars.RainbowMode)
+            colour = impulseState.TickRainbowMode(delta_t);
+        else
+            colour = vars.InkColour;
+
         impulseShader.Use();
         impulseShader.SetVec3("position", impulseState.CurrentPos);
         impulseShader.SetFloat("radius", vars.InkVolume);
-        impulseShader.SetVec4("force", vars.InkColour);
+        impulseShader.SetVec4("force", colour);
         impulseShader.SetImage("field_r", textures.Ink.Front(), 0, GL_READ_ONLY);
         impulseShader.SetImage("field_w", textures.Ink.Back(), 1, GL_WRITE_ONLY);
         impulseShader.Execute(computeWorkGroups);
@@ -413,8 +422,8 @@ void InkBox3DSimulation::CopyImage(Texture& dest, Texture& src)
 
 void InkBox3DSimulation::ClearFields()
 {
-    Texture* ptrs[] = 
-    { 
+    Texture* ptrs[] =
+    {
         &textures.Velocity.Front(),
         &textures.Velocity.Back(),
         &textures.Pressure.Front(),
@@ -453,7 +462,7 @@ void InkBox3DSimulation::TickDropletsMode()
             rand_pos.y = height / 2;
             rand_pos.z = rand() % depth;
 
-            rand_force.x = 0; 
+            rand_force.x = 0;
             rand_force.y = -1 * float(rand() % 1000) / 1000 * vars.ForceMultiplier;
             rand_force.z = 0;
         }
@@ -603,7 +612,7 @@ void InkBox3DSimulation::ProcessInputs()
 
     if (camera_changed)
         invProjView = inverse(projection * camera.ViewMatrix());
-    
+
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
         UpdatePickCoord();
 

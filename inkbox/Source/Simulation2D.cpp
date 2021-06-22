@@ -28,7 +28,6 @@ InkBox2DSimulation::InkBox2DSimulation(const InkBoxWindows& app, int width, int 
     , divergence(width, height, 1.f/width)
     , impulse(width, height, 1.f/width)
     , vorticity(width, height, 1.f/width)
-    , boundaries(width, height, 1.f/width)
     , timestep(0)
     , paused(false)
 {
@@ -310,9 +309,6 @@ bool InkBox2DSimulation::CreateShaderOps()
         sh.SetTexture("b", fbos.Pressure.Back(), 1);
     });
 
-    boundaries.SetShader(&boundaryShader);
-    boundaries.SetLines(&borderT, &borderB, &borderL, &borderR);
-
     return true;
 
 #undef ADD_SHADER
@@ -427,7 +423,12 @@ void InkBox2DSimulation::ComputeFields(float delta_t)
 
         if (impulseState.InkActive)
         {
-            vec3 colour(vars.InkColour.x, vars.InkColour.y, vars.InkColour.z);
+            vec4 colour;
+            if (vars.RainbowMode)
+                colour = impulseState.TickRainbowMode(delta_t);
+            else
+                colour = vars.InkColour;
+
             impulse.Use();
             impulse.SetOutput(&fbos.Ink.Back());
             impulse.Shader().SetVec2("position", vec2(impulseState.CurrentPos.x, impulseState.CurrentPos.y) * rdv);
@@ -501,11 +502,29 @@ void InkBox2DSimulation::ComputeBoundaryValues(SwapFBO& swap, float scale)
         return;
 
     CopyFBO(swap.Back(), swap.Front());
-    boundaries.Use();
-    boundaries.SetOutput(&swap.Back());
-    boundaries.Shader().SetTexture("field", swap.Front(), 0);
-    boundaries.Shader().SetFloat("scale", scale);
-    boundaries.Compute();
+    boundaryShader.Use();
+    boundaryShader.SetVec2("rdv", rdv);
+    boundaryShader.SetTexture("field", swap.Front(), 0);
+    boundaryShader.SetFloat("scale", scale);
+    
+    swap.Back().Bind();
+
+    boundaryShader.SetVec2("offset", 0, -1); // 1 texel down
+    _GL_WRAP1(glBindVertexArray, borderT.VAO);
+    _GL_WRAP4(glDrawElements, GL_LINES, 2, GL_UNSIGNED_INT, nullptr);
+
+    boundaryShader.SetVec2("offset", 0, 1); // 1 texel up
+    _GL_WRAP1(glBindVertexArray, borderB.VAO);
+    _GL_WRAP4(glDrawElements, GL_LINES, 2, GL_UNSIGNED_INT, nullptr);
+
+    boundaryShader.SetVec2("offset", 1, 0); // 1 texel to the right
+    _GL_WRAP1(glBindVertexArray, borderL.VAO);
+    _GL_WRAP4(glDrawElements, GL_LINES, 2, GL_UNSIGNED_INT, nullptr);
+
+    boundaryShader.SetVec2("offset", -1, 0); // 1 texel to the left
+    _GL_WRAP1(glBindVertexArray, borderR.VAO);
+    _GL_WRAP4(glDrawElements, GL_LINES, 2, GL_UNSIGNED_INT, nullptr);
+
     swap.Swap();
 }
 

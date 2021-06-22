@@ -43,6 +43,7 @@ struct ImpulseState
 	void Update(float x, float y, bool left_down, bool right_down);
 	void Reset();
 	bool IsActive() const { return InkActive || ForceActive; }
+	glm::vec4 TickRainbowMode(float delta_t);
 
 	glm::vec3 LastPos;
 	glm::vec3 CurrentPos;
@@ -50,6 +51,8 @@ struct ImpulseState
 	bool InkActive;
 	bool Radial;
 	glm::vec3 Delta;
+
+	float RainbowModeHue;
 };
 
 struct SimulationVars
@@ -64,6 +67,7 @@ struct SimulationVars
 	bool AddVorticity;
 	bool BoundariesEnabled;
 	bool DropletsMode;
+	bool RainbowMode;
 	float GridScale;
 	float SplatRadius;
 	float InkVolume;

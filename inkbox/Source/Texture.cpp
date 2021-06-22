@@ -39,10 +39,14 @@ Texture::Texture(int width, int height, int depth, int channels)
 		format = GL_RG;
 		internalFormat = snorm ? GL_RG16_SNORM : (component_width == 32 ? GL_RG32F : GL_RG16F);
 	}
-	else
+	else if (channels == 1)
 	{
 		format = GL_RED;
 		internalFormat = snorm ? GL_R16_SNORM : (component_width == 32 ? GL_R32F : GL_R16F);
+	}
+	else
+	{
+		throw exception("Invalid number of channels");
 	}
 
 	if (!Init(width, height, depth, format, GL_FLOAT, internalFormat))

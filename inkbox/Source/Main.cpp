@@ -90,9 +90,6 @@ int main(int argc, char* argv[])
 
     try
     {
-        if (is_3d)
-            IniConfig::Get().UseSnormTextures = true;
-
         IniConfig::Get().Print();
 
         int ctrl_h = UI_WINDOW_HEIGHT;

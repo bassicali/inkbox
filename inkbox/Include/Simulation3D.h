@@ -12,6 +12,7 @@ struct SimulationTextures
 		: Velocity(width, height, depth, 4)
 		, Pressure(width, height, depth, 4)
 		, Ink(width, height, depth, 4)
+		, Divergence(width, height, depth, 1)
 		, Temp(width, height, depth, 4)
 	{
 	}
@@ -19,6 +20,7 @@ struct SimulationTextures
 	SwapTexture Ink;
 	SwapTexture Velocity;
 	SwapTexture Pressure; // TODO: Pressure only needs 1 channel
+	Texture Divergence;
 	Texture Temp;
 };
 
