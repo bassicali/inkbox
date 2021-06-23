@@ -26,6 +26,7 @@ InkBox3DSimulation::InkBox3DSimulation(const InkBoxWindows& app, int width, int 
     , limiter(60)
     , scrollAcc(0)
     , delta_t(0)
+    , paused(0)
     , computeLocalSize(4, 4, 4)
 {
     glfwGetWindowSize(window, &wwidth, &wheight);
@@ -225,9 +226,12 @@ void InkBox3DSimulation::WindowLoop()
 
         glfwPollEvents();
         ProcessInputs();
-        TickDropletsMode();
 
-        ComputeFields();
+        if (!paused)
+        {
+            TickDropletsMode();
+            ComputeFields();
+        }
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // also clear the depth buffer now!
@@ -256,6 +260,7 @@ void InkBox3DSimulation::WindowLoop()
         _GL_WRAP4(glDrawElements, GL_LINES, cubeBorder.NumVertices, GL_UNSIGNED_INT, nullptr);
 
         glfwSwapBuffers(window);
+
         limiter.Regulate();
 
         // Render control panel window
@@ -526,6 +531,22 @@ void InkBox3DSimulation::UpdatePickCoord()
 void InkBox3DSimulation::ProcessInputs()
 {
     lock_guard<mutex> lock(scrollMtx);
+
+    static int pkey = 0;
+    if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
+    {
+        pkey = 1;
+    }
+    else if (pkey == 1 && glfwGetKey(window, GLFW_KEY_P) == GLFW_RELEASE)
+    {
+        pkey = 0;
+        paused = !paused;
+
+        if (paused)
+            glfwSetWindowTitle(window, MAIN_WINDOW_TITLE "(PAUSED)");
+        else
+            glfwSetWindowTitle(window, MAIN_WINDOW_TITLE);
+    }
 
     static bool orbit_mode = true;
     bool camera_changed = false;

@@ -56,6 +56,7 @@ private:
 	glm::mat4 projection;
 	glm::mat4 invProjView;
 	float delta_t;
+	bool paused;
 	glm::uvec3 computeLocalSize;
 	glm::uvec3 computeWorkGroups;
 	ImpulseState impulseState;
