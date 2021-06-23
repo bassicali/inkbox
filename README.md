@@ -1,6 +1,6 @@
 # i n k b o x
 
-This is an implementation of the fluid simulation system described in "Fast Fluid Dynamics Simulation on the GPU" by Mark J. Harris (a chapter in the book "GPU Gems"). I followed along with the chapter and implemented mostly the same system except using modern OpenGL and GLSL rather than the now-deprecated Cg framework. I've also written a 3D version of the system as well as a WebGL version of the 2D simulation. All three simulations have a UI that lets the user change the parameters of the system.
+This is an implementation of the fluid simulation system described in "Fast Fluid Dynamics Simulation on the GPU" by Mark J. Harris (a chapter in the book "GPU Gems"). I followed along with the chapter and implemented mostly the same system except using modern OpenGL and GLSL rather than the now-deprecated Cg framework. I've also written a 3D version of the system as well as a WebGL version of the 2D simulation. All three simulations have a UI that lets the user change the parameters of the equations.
 
 ## 2D C++ Simulation
 - A visual representation the velocity, pressure and vorticity fields is shown in the controls window
@@ -15,7 +15,7 @@ This is an implementation of the fluid simulation system described in "Fast Flui
 - Press 'p' key to toggle pause
 
 <img src="images/screen1.png">
-<img width="50%" height="50%" src="images/2danim.gif">
+<img width="50%" height="50%" src="images/2dvid.gif">
 
 ---
 
@@ -31,7 +31,7 @@ This is an implementation of the fluid simulation system described in "Fast Flui
 - Press 'i' key to add ink at a random location
 - Press 'p' key to toggle pause
 
-<img width="50%" height="50%" src="images/3danim.gif">
+<img width="50%" height="50%" src="images/3dvid.gif">
 
 ---
 
@@ -46,7 +46,8 @@ This is an implementation of the fluid simulation system described in "Fast Flui
 - [Fast Fluid Dynamics Simulation on the GPU - Mark J. Harris](https://developer.download.nvidia.com/books/HTML/gpugems/gpugems_ch38.html)
 - Stam, J. 1999. "Stable Fluids."
 
-## Projects
+## Credits
 - [OpenGL](https://www.opengl.org/)
 - [GLFW](https://www.glfw.org/)
 - [Dear ImGui](https://github.com/ocornut/imgui)
+- [CloudConvert](https://cloudconvert.com/) for creating gifs
