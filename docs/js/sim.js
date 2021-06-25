@@ -11,7 +11,7 @@ var sim = {
     context: null,
     quad: null,
     borders: null,
-    current_time: 0,
+    currentTime: 0,
     delta_t: 0,
     paused: false,
     fpsDisplay: null
@@ -379,6 +379,7 @@ function init() {
     document.getElementById('btnUpdate').addEventListener('click', updateFromParamVars);
     document.getElementById('btnClear').addEventListener('click', clearFields);
     document.getElementById('btnPause').addEventListener('click', toggleSimulation);
+    document.addEventListener('keydown', e => { if (e.key == 'p') { toggleSimulation(); } });
 
     document.getElementById('clrInk').value = rgbfToHex(params.inkColour);
     document.getElementById('clrInk').addEventListener('change', (e) => {
@@ -514,8 +515,6 @@ function toggleSimulation() {
     }
     else {
         btn.innerText = 'Pause';
-        sim.current_time = 0;
-        window.requestAnimationFrame(tick);
     }
 }
 
@@ -535,13 +534,16 @@ function clearFields() {
 
 function tick(timestamp) {
     timestamp /= 1000;
-    sim.delta_t = sim.current_time == 0 ? 0.016667 : timestamp - sim.current_time;
-    sim.current_time = timestamp;
+    sim.delta_t = sim.currentTime == 0 ? 0.016667 : timestamp - sim.currentTime;
+    sim.currentTime = timestamp;
 
-    let fps = (1 / sim.delta_t).toFixed(2);
-    sim.fpsDisplay.innerText = `FPS: ${fps} Hz`;
+    if (!sim.paused) {
+        let fps = (1 / sim.delta_t).toFixed(2);
+        sim.fpsDisplay.innerText = `FPS: ${fps} Hz`;
 
-    computeFields();
+        computeFields();
+    }
+
     let outputTexture = null;
 
     if (params.displayField == 'ink') {
@@ -579,9 +581,7 @@ function tick(timestamp) {
     shaders.copy.setTexture('field', outputTexture, 0);
     drawQuad(null);
 
-    if (!sim.paused) {
-        window.requestAnimationFrame(tick);
-    }
+    window.requestAnimationFrame(tick);
 }
 
 function computeFields() {
