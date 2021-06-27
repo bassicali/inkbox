@@ -247,8 +247,8 @@ function init() {
         return;
     }
 
-    // On my iphone and firefox this extension is supported but trying to render to it doesn't work
-    if (!env.isMobile && !env.isFirefox) {
+    // On my iphone this extension is supported but trying to render to it doesn't work
+    if (!env.isMobile) {
         let fullFloatExt = gl.getExtension('OES_texture_float');
         if (fullFloatExt != null) {
             env.textureType = gl.FLOAT;
