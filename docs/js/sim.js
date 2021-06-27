@@ -18,6 +18,8 @@ var sim = {
 }
 
 var env = {
+    isMobile: false,
+    isFirefox: false,
     textureType: null,
     supportsLinearSampling: false,
     filtering: null
@@ -46,7 +48,9 @@ class FBO {
 
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, env.filtering);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, env.filtering);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, width, height, 0, gl.RGB, env.textureType, null);
+        // HACK: find a better way to handle firefox
+        let format = env.isFirefox ? gl.RGBA : gl.RGB;
+        gl.texImage2D(gl.TEXTURE_2D, 0, format, width, height, 0, format, env.textureType, null);
 
         this.buffer = gl.createFramebuffer();
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.buffer);
@@ -223,10 +227,12 @@ class Vec3 {
 }
 
 function init() {
-    let isMobile = /Android|webOS|iPhone|iPad|Mac|Macintosh|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    env.isMobile = /Android|webOS|iPhone|iPad|Mac|Macintosh|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    env.isFirefox = /Firefox/i.test(navigator.userAgent);
+
     sim.canvas = document.getElementById('mainCanvas');
     
-    if (isMobile) {
+    if (env.isMobile) {
         let w = (window.innerWidth > 0) ? window.innerWidth : screen.width;
         if (w <= 400) {
             sim.canvas.width = w;
@@ -241,8 +247,8 @@ function init() {
         return;
     }
 
-    // On my iphone this extension is supported but trying to render to it doesn't work
-    if (!isMobile) {
+    // On my iphone and firefox this extension is supported but trying to render to it doesn't work
+    if (!env.isMobile && !env.isFirefox) {
         let fullFloatExt = gl.getExtension('OES_texture_float');
         if (fullFloatExt != null) {
             env.textureType = gl.FLOAT;
@@ -1028,7 +1034,7 @@ varying vec2 coord;
 void main()
 {
     vec4 vis = bias + scale * texture2D(field, coord).xxxx;
-    gl_FragColor = vis;
+    gl_FragColor = vec4(vis.rgb, 1.0);
 }`,
     vector_vis: `
 precision highp float;
