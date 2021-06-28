@@ -19,6 +19,7 @@
 
 #include "../resource.h"
 #include "Common.h"
+#include "IniConfig.h"
 
 using namespace std;
 using namespace glm;
@@ -384,7 +385,7 @@ vec4 HSLToRGB(float h, float s, float l)
 
 glm::vec4 ImpulseState::TickRainbowMode(float delta_t)
 {
-    RainbowModeHue += delta_t / 0.016667f;
+    RainbowModeHue += (delta_t / 0.016667f) * IniConfig::Get().RainbowModeHueMultiplier;
     if (RainbowModeHue > 360.f)
         RainbowModeHue = 0;
 

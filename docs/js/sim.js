@@ -227,7 +227,7 @@ class Vec3 {
 }
 
 function init() {
-    env.isMobile = /Android|webOS|iPhone|iPad|Mac|Macintosh|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    env.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     env.isFirefox = /Firefox/i.test(navigator.userAgent);
 
     sim.canvas = document.getElementById('mainCanvas');
@@ -243,7 +243,7 @@ function init() {
     gl = sim.canvas.getContext('webgl');
 
     if (gl == null) {
-        alert('Your browser or device does not supported webgl :(');
+        alert('Your browser or device does not support webgl :(');
         return;
     }
 
@@ -359,6 +359,7 @@ function init() {
         advectionDissipation: 0.99,
         inkAdvectionDissipation: 0.98,
         inkVolume: 0.002,
+        radialForce: false,
 
         inkColour: new Vec3(0.54, 0.2, 0.78),
         rainbowModeHue: null,
@@ -369,13 +370,15 @@ function init() {
 
     setupParamsForm(params);
 
-    sim.canvas.addEventListener('mousedown', e => mouseEvent('down', e, false));
-    sim.canvas.addEventListener('mouseup', e => mouseEvent('up', e, false));
-    sim.canvas.addEventListener('mousemove', e => mouseEvent('move', e, false));
+    sim.canvas.addEventListener('mousedown', e => mouseEvent('down', e, false, e.button == 2));
+    sim.canvas.addEventListener('mouseup', e => mouseEvent('up', e, false, e.button == 2));
+    sim.canvas.addEventListener('mousemove', e => mouseEvent('move', e, false, e.button == 2));
 
-    sim.canvas.addEventListener('touchstart', e => mouseEvent('down', e, true));
-    sim.canvas.addEventListener('touchend', e => mouseEvent('up', e, true));
-    sim.canvas.addEventListener('touchmove', e => mouseEvent('move', e, true));
+    sim.canvas.addEventListener('touchstart', e => mouseEvent('down', e, true, false));
+    sim.canvas.addEventListener('touchend', e => mouseEvent('up', e, true, false));
+    sim.canvas.addEventListener('touchmove', e => mouseEvent('move', e, true, false));
+
+    sim.canvas.addEventListener('contextmenu', e => { e.preventDefault(); return false; });
 
     document.getElementById("rdInk").addEventListener('change', updateDisplayField);
     document.getElementById("rdVelocity").addEventListener('change', updateDisplayField);
@@ -404,7 +407,7 @@ function getRelativeMousePos(mouse) {
     return new Vec2(x, y);
 }
 
-function mouseEvent(type, event, isTouch) {
+function mouseEvent(type, event, isTouch, isRightButton) {
     let pos;
 
     if (isTouch) {
@@ -419,7 +422,7 @@ function mouseEvent(type, event, isTouch) {
     if (type == 'down') {
         if (!impulse.forceActive && !impulse.inkActive) {
             impulse.forceActive = true;
-            impulse.inkActive = true;
+            impulse.inkActive = !isRightButton;
             impulse.currentPos = new Vec2(pos.x, sim.canvas.height - pos.y);
             impulse.lastPos = impulse.currentPos;
             impulse.delta = new Vec2(0, 0);
@@ -468,6 +471,9 @@ function setupParamsForm(params) {
     document.getElementById("chkRainbow").checked = params.rainbowModeEnabled;
     document.getElementById("chkRainbow").addEventListener('change', toggleRainbowMode);
 
+    document.getElementById("chkRadialForce").checked = params.radialForce;
+    document.getElementById("chkRadialForce").addEventListener('change', updateParamFlags);
+
     document.getElementById('txtGridScale').value = params.gridScale;
     document.getElementById('txtVorticity').value = params.vorticity;
     document.getElementById('txtViscosity').value = params.viscosity;
@@ -485,6 +491,7 @@ function updateParamFlags() {
     params.diffuseInk = document.getElementById("chkInkDiffuse").checked;
     params.addVorticity = document.getElementById("chkVorticity").checked;
     params.computeBoundaries = document.getElementById("chkBoundaries").checked;
+    params.radialForce = document.getElementById("chkRadialForce").checked;
 }
 
 function updateFromParamVars() {
@@ -630,6 +637,7 @@ function computeFields() {
         shaders.impulse.setFloat('radius', params.forceRadius);
         shaders.impulse.setVec2('position', impulse.currentPos.mul(params.rdv));
         shaders.impulse.setVec3('force', force);
+        shaders.impulse.setInt('radial', params.radialForce ? 1 : 0);
         shaders.impulse.setTexture('velocity', fields.velocity.front.texture, 0);
         drawQuad(fields.velocity.back.buffer);
         fields.velocity.swap();
@@ -654,6 +662,7 @@ function computeFields() {
         shaders.impulse.setFloat('radius', params.inkVolume);
         shaders.impulse.setVec2('position', impulse.currentPos.mul(params.rdv));
         shaders.impulse.setVec3('force', colour);
+        shaders.impulse.setInt('radial', 0);
         shaders.impulse.setTexture('velocity', fields.ink.front.texture, 0);
         drawQuad(fields.ink.back.buffer);
         fields.ink.swap();
@@ -869,6 +878,7 @@ uniform vec2 position;		// Cursor position
 uniform vec3 force;			// The force
 uniform float radius;		// Radius of gaussian splat
 uniform sampler2D velocity;	// Velocity field
+uniform bool radial;
 
 varying vec2 coord;
 
@@ -876,7 +886,8 @@ void main()
 {
 	vec2 diff = position - coord;
 	float x = -dot(diff,diff) / radius;
-	vec3 effect = force * exp(x);
+    vec3 impulse = radial ? vec3(normalize(diff), 0.0) : force;
+	vec3 effect = impulse * exp(x);
 	vec3 u0 = texture2D(velocity, coord).xyz;
     u0 += effect;
 

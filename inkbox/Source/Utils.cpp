@@ -111,27 +111,27 @@ bool utils::LineIntersectsBox(glm::vec3 lp, glm::vec3 ld, glm::vec3 ttl, glm::ve
 
     CHECK_AND_RETURN
 
-        if (LineIntersectsRect(lp, ld, ttl, tbl, btl, bbl, i))
-            intersects[cnt++] = i;
+    if (LineIntersectsRect(lp, ld, ttl, tbl, btl, bbl, i))
+        intersects[cnt++] = i;
 
     CHECK_AND_RETURN
 
-        if (LineIntersectsRect(lp, ld, tbr, ttr, bbr, btr, i))
-            intersects[cnt++] = i;
+    if (LineIntersectsRect(lp, ld, tbr, ttr, bbr, btr, i))
+        intersects[cnt++] = i;
 
     CHECK_AND_RETURN
 
-        if (LineIntersectsRect(lp, ld, ttl, ttr, tbl, tbr, i))
-            intersects[cnt++] = i;
+    if (LineIntersectsRect(lp, ld, ttl, ttr, tbl, tbr, i))
+        intersects[cnt++] = i;
 
     CHECK_AND_RETURN
 
-        if (LineIntersectsRect(lp, ld, btl, btr, bbl, bbr, i))
-            intersects[cnt++] = i;
+    if (LineIntersectsRect(lp, ld, btl, btr, bbl, bbr, i))
+        intersects[cnt++] = i;
 
     CHECK_AND_RETURN
 
-        return false;
+    return false;
 
 #undef CHECK_AND_RETURN
 }

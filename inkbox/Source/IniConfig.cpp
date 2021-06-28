@@ -31,6 +31,8 @@ IniConfig::IniConfig()
 	, KeyOrbitSensitivity(0.06)
 	, TextureComponentWidth(16)
 	, UseSnormTextures(false)
+	, RainbowModeHueMultiplier(1.0)
+	, DropletsModeDelay(1.0)
 {
 	fs::path config_path(CONFIG_FILE_NAME);
 
@@ -61,6 +63,8 @@ void IniConfig::Save()
 		WRITE_SETTING(KeyOrbitSensitivity);
 		WRITE_SETTING(TextureComponentWidth);
 		WRITE_SETTING(UseSnormTextures);
+		WRITE_SETTING(RainbowModeHueMultiplier);
+		WRITE_SETTING(DropletsModeDelay);
 	}
 	else
 	{
@@ -101,6 +105,8 @@ void IniConfig::Load(std::istream& stream)
 			PARSE_FLOAT(key, value, KeyOrbitSensitivity)
 			PARSE_INT(key, value, TextureComponentWidth)
 			PARSE_BOOL(key, value, UseSnormTextures)
+			PARSE_FLOAT(key, value, RainbowModeHueMultiplier)
+			PARSE_FLOAT(key, value, DropletsModeDelay)
 		}
 	}
 
@@ -119,4 +125,6 @@ void IniConfig::Print()
 	LOG_INFO("\tKeyOrbitSensitivity: %.2f", KeyOrbitSensitivity);
 	LOG_INFO("\tTextureComponentWidth: %d", TextureComponentWidth);
 	LOG_INFO("\tUseSnormTextures: %d", UseSnormTextures);
+	LOG_INFO("\tRainbowModeHueMultiplier: %.2f", RainbowModeHueMultiplier);
+	LOG_INFO("\tDropletsModeDelay (sec): %.2f", DropletsModeDelay);
 }

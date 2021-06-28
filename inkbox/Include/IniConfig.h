@@ -15,6 +15,8 @@ struct IniConfig
 	float ScrollSensitivity;
 	float MouseOrbitSensitivity;
 	float KeyOrbitSensitivity;
+	float RainbowModeHueMultiplier;
+	float DropletsModeDelay;
 
 	int TextureComponentWidth;
 	bool UseSnormTextures;

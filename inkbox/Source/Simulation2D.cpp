@@ -11,6 +11,7 @@
 
 #include "Shader.h"
 #include "Common.h"
+#include "IniConfig.h"
 
 using namespace std;
 using namespace glm;
@@ -28,7 +29,7 @@ InkBox2DSimulation::InkBox2DSimulation(const InkBoxWindows& app, int width, int 
     , divergence(width, height, 1.f/width)
     , impulse(width, height, 1.f/width)
     , vorticity(width, height, 1.f/width)
-    , timestep(0)
+    , delta_t(0)
     , paused(false)
 {
     ui.SetValues(vars);
@@ -108,11 +109,15 @@ void InkBox2DSimulation::WindowLoop()
     while (!glfwWindowShouldClose(window))
     {
         glfwMakeContextCurrent(window);
+
         double now = glfwGetTime();
-        timestep = last_time == 0 ? 0.016667 : now - last_time;
+        glfwPollEvents();
+        double timestep_eventpoll = glfwGetTime() - now;
+
+        now = glfwGetTime();
+        delta_t = last_time == 0 ? 0.016667 : (now - last_time) - timestep_eventpoll;
         last_time = now;
 
-        glfwPollEvents();
         ProcessInputs();
 
         if (!paused)
@@ -121,7 +126,7 @@ void InkBox2DSimulation::WindowLoop()
                 TickDropletsMode();
 
             // Update velocity, pressure, and ink fields
-            ComputeFields(timestep);
+            ComputeFields();
 
             // Create visualizations for each one
 
@@ -247,14 +252,14 @@ bool InkBox2DSimulation::CreateShaderOps()
     impulse.SetShader(&impulseShader);
     impulse.SetQuad(&quad);
     impulse.SetUniformsFunc([&](GLShaderProgram& sh) -> void {
-        sh.SetFloat("delta_t", timestep);
+        sh.SetFloat("delta_t", delta_t);
     });
 
     
     radialImpulse.SetShader(&radialImpulseShader);
     radialImpulse.SetQuad(&quad);
     radialImpulse.SetUniformsFunc([&](GLShaderProgram& sh) -> void {
-        sh.SetFloat("delta_t", timestep);
+        sh.SetFloat("delta_t", delta_t);
     });
 
     advection.SetShader(&advectionShader);
@@ -262,7 +267,7 @@ bool InkBox2DSimulation::CreateShaderOps()
     advection.SetUniformsFunc([&](GLShaderProgram& sh) -> void {
         sh.SetFloat("gs", vars.GridScale);
         sh.SetVec2("rdv", rdv);
-        sh.SetFloat("delta_t", timestep);
+        sh.SetFloat("delta_t", delta_t);
         sh.SetTexture("velocity", fbos.Velocity, 0);
     });
 
@@ -355,7 +360,7 @@ void InkBox2DSimulation::ProcessInputs()
     }
 }
 
-void InkBox2DSimulation::ComputeFields(float delta_t)
+void InkBox2DSimulation::ComputeFields()
 {
     if (!vars.SelfAdvect && !vars.AdvectInk && !vars.DiffuseVelocity && !vars.AddVorticity)
         return;
@@ -561,13 +566,15 @@ void InkBox2DSimulation::TickDropletsMode()
 {
     static float acc = 0;
     static float next_drop = 0;
-    static ivec2 freq_range(200, 1500);
+    static ivec2 freq_range(200, 1000);
 
-    acc += (timestep * 1000);
+    acc += delta_t * 1000;
     if (acc >= next_drop)
     {
         acc = 0;
-        next_drop = (rand() % (freq_range.y - freq_range.x)) + freq_range.x;
+        float delay = IniConfig::Get().DropletsModeDelay * 1000;
+        next_drop = delay + pow(-1, rand() % 2) * (rand() % int(0.5 * delay));
+        //LOG_INFO("Next drop: %.2f", next_drop);
 
         vec2 rand_pos0, rand_pos1;
         rand_pos0 = RandPos();

@@ -24,10 +24,10 @@
             <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
                 <input type="radio" class="btn-check" name="displayField" id="rdInk" autocomplete="off">
                 <label class="btn btn-sm btn-primary btn-theme" style="color: #fff;background-color: hsl(275, 59%, 40%) !important;border-color: hsl(275, 59%, 20%) !important;" for="rdInk">Ink</label>
-
+              
                 <input type="radio" class="btn-check" name="displayField" id="rdVelocity" autocomplete="off">
                 <label class="btn btn-sm btn-primary btn-theme" style="color: #fff;background-color: hsl(275, 59%, 40%) !important;border-color: hsl(275, 59%, 20%) !important;" for="rdVelocity">Velocity</label>
-
+              
                 <input type="radio" class="btn-check" name="displayField" id="rdPressure" autocomplete="off">
                 <label class="btn btn-sm btn-primary btn-theme" style="color: #fff;background-color: hsl(275, 59%, 40%) !important;border-color: hsl(275, 59%, 20%) !important;" for="rdPressure">Pressure</label>
 
@@ -65,7 +65,11 @@
                         <label>Vorticity</label>
                         <input type="checkbox" id="chkVorticity" />
                     </td>
-                    <td class="align-end" style="display:none;">
+                    <td class="align-end">
+                        <label>Radial Force</label>
+                        <input type="checkbox" id="chkRadialForce" />
+                    </td>
+                    <td class="align-end" style="display: none;">
                         <label>Boundary Conditions</label>
                         <input type="checkbox" id="chkBoundaries" />
                     </td>
