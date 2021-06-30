@@ -33,6 +33,7 @@ IniConfig::IniConfig()
 	, UseSnormTextures(false)
 	, RainbowModeHueMultiplier(1.0)
 	, DropletsModeDelay(1.0)
+	, ColourBorderWithCoord(false)
 {
 	fs::path config_path(CONFIG_FILE_NAME);
 
@@ -65,6 +66,7 @@ void IniConfig::Save()
 		WRITE_SETTING(UseSnormTextures);
 		WRITE_SETTING(RainbowModeHueMultiplier);
 		WRITE_SETTING(DropletsModeDelay);
+		WRITE_SETTING(ColourBorderWithCoord);
 	}
 	else
 	{
@@ -107,6 +109,7 @@ void IniConfig::Load(std::istream& stream)
 			PARSE_BOOL(key, value, UseSnormTextures)
 			PARSE_FLOAT(key, value, RainbowModeHueMultiplier)
 			PARSE_FLOAT(key, value, DropletsModeDelay)
+			PARSE_BOOL(key, value, ColourBorderWithCoord)
 		}
 	}
 

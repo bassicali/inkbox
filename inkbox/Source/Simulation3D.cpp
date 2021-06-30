@@ -196,6 +196,8 @@ bool InkBox3DSimulation::CreateScene()
     _InitComputeShader("3d\\clear.comp", clearShader, computeLocalSize, img_format);
 
     _GL_WRAP1(glEnable, GL_DEPTH_TEST);
+    _GL_WRAP1(glLineWidth, 1.0f);
+    _GL_WRAP1(glEnable, GL_LINE_SMOOTH);
     //_GL_WRAP1(glEnable, GL_BLEND);
 
     glfwSetWindowUserPointer(window, this);
@@ -216,6 +218,8 @@ void InkBox3DSimulation::WindowLoop()
 
     camera.LookAt(vec3(0, 0, 0));
     invProjView = inverse(projection * camera.ViewMatrix());
+
+    vec3 border_colour = vec3(128, 128, 128) / vec3(255, 255, 255);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -256,6 +260,8 @@ void InkBox3DSimulation::WindowLoop()
         borderShader.SetMatrix4x4("model", cubeModel);
         borderShader.SetMatrix4x4("view", camera.ViewMatrix());
         borderShader.SetMatrix4x4("proj", projection);
+        borderShader.SetInt("colour_with_coord", IniConfig::Get().ColourBorderWithCoord);
+        borderShader.SetVec3("colour", border_colour);
         _GL_WRAP1(glBindVertexArray, cubeBorder.VAO);
         _GL_WRAP4(glDrawElements, GL_LINES, cubeBorder.NumVertices, GL_UNSIGNED_INT, nullptr);
 

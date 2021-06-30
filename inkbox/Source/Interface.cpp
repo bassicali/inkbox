@@ -44,7 +44,7 @@ InkBoxWindows::~InkBoxWindows()
         glfwDestroyWindow(Controls);
 }
 
-bool InkBoxWindows::InitGLContexts(int width, int height, int ctrl_width, int ctrl_height)
+bool InkBoxWindows::InitGLContexts(int width, int height, bool main_resizeable, int ctrl_width, int ctrl_height)
 {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -56,6 +56,7 @@ bool InkBoxWindows::InitGLContexts(int width, int height, int ctrl_width, int ct
         return false;
     }
 
+    glfwWindowHint(GLFW_RESIZABLE, (int)main_resizeable);
     Main = glfwCreateWindow(width, height, MAIN_WINDOW_TITLE, nullptr, nullptr);
     if (Main == nullptr)
     {

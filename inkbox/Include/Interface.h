@@ -20,7 +20,7 @@ struct InkBoxWindows
 	InkBoxWindows();
 	~InkBoxWindows();
 
-	bool InitGLContexts(int width, int height, int ctrl_width, int ctrl_height);
+	bool InitGLContexts(int width, int height, bool main_resizeable, int ctrl_width, int ctrl_height);
 
 	GLFWwindow* Main;
 	GLFWwindow* Controls;

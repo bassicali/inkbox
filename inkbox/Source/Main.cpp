@@ -96,7 +96,7 @@ int main(int argc, char* argv[])
         int ctrl_w = UI_WINDOW_WIDTH;
         ctrl_w -= is_3d ? 343 : 0;
 
-        if (!app.InitGLContexts(WINDOW_WIDTH, WINDOW_HEIGHT, ctrl_w, ctrl_h))
+        if (!app.InitGLContexts(WINDOW_WIDTH, WINDOW_HEIGHT, !is_3d, ctrl_w, ctrl_h))
         {
             return -1;
         }

@@ -21,5 +21,7 @@ struct IniConfig
 	int TextureComponentWidth;
 	bool UseSnormTextures;
 
+	bool ColourBorderWithCoord;
+
 	static IniConfig& Get();
 };
